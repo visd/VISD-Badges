@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-This is meant to be run on your delopment machine and interact with a
+This is meant to be run on your development machine and interact with
 django on a vagrant vm.
 
 You can get tab completion in oh-my-zsh if yiu enable the django plugin
