@@ -82,6 +82,12 @@ STATICFILES_FINDERS = (
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
+
+# List of directories searched for fixture files, in addition to the fixtures
+# directory of each application, in search order. Note that these paths should
+# use Unix-style forward slashes, even on Windows.
+FIXTURE_DIRS = 'initial_data/'
+
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'xgpa9yl#=ptag1ci-9y$=!@@)qvphvt!$w@kqhd7%#*%i1i=w!'
 
@@ -127,6 +133,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'api',
     'badges',
+    'auth_fix',
 )
 
 # A sample logging configuration. The only tangible logging
