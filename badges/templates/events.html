@@ -1,0 +1,25 @@
+{# The syntax for events might get complicated. Let's start with just a string for each and grow from there. #}
+
+{% if event_list %}
+{% for event in event_list %}
+<div class="well">
+    <p>{{event.text}}</p>
+</div>
+{% endfor %}
+{% else %}
+<div class="well">
+    <p>Some event</p>
+</div>
+<div class="well">
+    <p>Some other event</p>
+</div>
+<div class="well">
+    <p>A third event</p>
+</div>
+<div class="well">
+    <p>A fourth event</p>
+</div>
+<div class="well">
+    <p>Finally, an event</p>
+</div>
+{% endif %}
