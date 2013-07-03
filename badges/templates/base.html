@@ -5,17 +5,27 @@
     <meta charset="UTF-8">
     <title>Tech Badges</title>
     <style>
-    body { background-image: url(bkgdtiles.png); padding:0; margin:0; height: 100%; 
+    html { padding:0; margin:0; height: 100%; 
                 background-color: #91a096;}
     
     #mainpanel {
         padding-top: 10px;
-        background: rgb(216,216,216);
-        background: rgba(255,255,255,.6);
                 border: 1px solid #e3e3e3;
           -webkit-border-radius: 4px;
              -moz-border-radius: 4px;
                   border-radius: 4px;
+    }
+
+    .sidebar a {
+    }
+
+    .visualthinking {
+        background: rgb(196,212,196);
+        background: rgba(196,212,196,.6);
+    }
+
+    .entry {
+        background-color: #ffffc4;
     }
 
     #banner {
@@ -94,5 +104,6 @@
 
     {% block content %}{% endblock %}
     <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/holder/1.9.0/holder.js"></script>
 </body>
 </html>
