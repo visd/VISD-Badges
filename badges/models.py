@@ -1,52 +1,71 @@
 from django.contrib.auth.models import User, Group
+from django.template.defaultfilters import slugify
 from django.db import models
-
-class Badge(models.Model):
-    title = models.CharField(max_length=30)
+from auth.models import UserProfile
 
 class Tag(models.Model):
-    word        = models.CharField(db_index=True, max_length=35, unique=True)
-    slug        = models.CharField(max_length=250)
-    created_at  = models.DateTimeField(auto_now_add=True)
+    word = models.CharField(max_length=35)
+    slug = models.SlugField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    # challenges = models.ForeignKey('Challenge', related_name='Challenges')
 
     def __unicode__(self):
         return self.word
 
-    class Meta:
-        ordering = ['word']
+    def save(self, *args, **kwargs):
+            self.slug = slugify(self.word)
+            super(Tag, self).save(*args, **kwargs)
 
-class Challenges(models.Model):
+class Tool(models.Model):
     title = models.CharField(db_index=True, max_length=30, unique=True)
-    # skill = models.ForeignKey('Skillset', verbose_name=u'skill that challenge bellongs to')
-    short_description = models.CharField(max_length=140)
-    long_description = models.CharField(max_length=600)
-    tags = models.ManyToManyField(Tag)
+    slug = models.SlugField()
+    url_link = models.URLField(max_length=300)
+    url_title = models.CharField(max_length=140)
+    icon = models.CharField(max_length=2) # Icon Font used?
+    created_at = models.DateTimeField(auto_now_add=True)
+    # challenges = models.ForeignKey('Challenge', related_name='Challenges')
 
-    class Meta:
-        ordering = ['title']
+    def __unicode__(self):
+        return self.title
 
-class Skillset(models.Model):
-    title = models.CharField(db_index=True, max_length=30, unique=True)
-    short_description = models.CharField(max_length=140)
-    long_description = models.CharField(max_length=600)
-    challenges_list = models.ManyToManyField(Challenges, verbose_name=u'list of challenges')
-
-    class Meta:
-        ordering = ['title']
+    def save(self, *args, **kwargs):
+            self.slug = slugify(self.title)
+            super(Tool, self).save(*args, **kwargs)
 
 
-class Entries(models.Model):
+class Entry(models.Model):
     id = models.AutoField(db_index=True, primary_key=True)
-    user = models.OneToOneField(User, verbose_name=u'creator of entry')
+    user = models.ForeignKey(UserProfile)
     title = models.CharField(max_length=30)
     caption = models.CharField(max_length=140)
-    image = models.URLField(max_length=300)
+    image = models.ImageField(upload_to='photos/%Y/%m/%d/')
     url_link = models.URLField(max_length=300)
     url_title = models.CharField(max_length=140)
     created_at  = models.DateTimeField(auto_now_add=True)
+    challenge = models.ForeignKey('Challenge')
 
-    class Meta:
-        ordering = ['user']
+    def __unicode__(self):
+        return "%(id)s, %(user)s: %(title)s" % locals()
+
+
+class Challenge(models.Model):
+    title = models.CharField(db_index=True, max_length=30, unique=True)
+    slug = models.SlugField()
+    skill = models.ForeignKey('Skillset')
+    short_description = models.CharField(max_length=140)
+    long_description = models.CharField(max_length=600)
+    tags = models.ManyToManyField(Tag)
+    resources = models.ManyToManyField('Resource')
+    tools = models.ManyToManyField(Tool)
+    # entries = models.ManyToManyField(Entry)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+            self.slug = slugify(self.title)
+            super(Challenge, self).save(*args, **kwargs)
 
 
 class Resource(models.Model):
@@ -56,13 +75,24 @@ class Resource(models.Model):
     url_title = models.CharField(max_length=140)
     description = models.CharField(max_length=140)
     thumb = models.URLField(max_length=300)
+    created_at = models.DateTimeField(auto_now_add=True)
+    challenges = models.ForeignKey(Challenge)
 
-class Tool(models.Model):
+    def __unicode__(self):
+        return self.title
+
+
+class Skillset(models.Model):
     title = models.CharField(db_index=True, max_length=30, unique=True)
-    url_link = models.URLField(max_length=300)
-    url_title = models.CharField(max_length=140)
-    icon = models.CharField(max_length=2) # Icon Font used?
+    slug = models.SlugField()
+    short_description = models.CharField(max_length=140)
+    long_description = models.CharField(max_length=600)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        ordering = ['title']
+    def __unicode__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+            self.slug = slugify(self.title)
+            super(Skillset, self).save(*args, **kwargs)
 
