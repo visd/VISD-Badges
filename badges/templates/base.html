@@ -4,9 +4,11 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta charset="UTF-8">
     <title>Tech Badges</title>
+
+    {# During development I'll stash these here, then compile them into Bootsrap later. #}
     <style>
     html { padding:0; margin:0; height: 100%; 
-                background-color: #91a096;}
+                background: #91a096;}
     
     #mainpanel {
         padding-top: 10px;
@@ -25,6 +27,10 @@
     }
 
     .entry {
+        background-color: #ffffc4;
+    }
+
+    .completed {
         background-color: #ffffc4;
     }
 
@@ -60,6 +66,10 @@
         line-height: 2em;
     }
 
+    #profile {
+    
+    }
+
     .thumb-frame {
         height: 40px;
         width: 40px;
@@ -73,31 +83,18 @@
     <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet">
 </head>
 <body>
-
-    <div class="row">
-        <div id="banner" class="span5">
-            <h1>Tech Badges</h1>
-        </div>
-        <div class="span7">
-            <div class="navbar-text">
-                {% if user %}
-                <p>Welcome, {{user.nickname}}!</p>
-                {% else %}
-                <p>You are not logged in.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="navbar navbar-inverse">
+    <div class="navbar">
         <div class="navbar-inner">
-            <div class="container">
-                <ul class="nav">
-                    <li><a href="#">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/gallery">Gallery</a></li>
-                    <li><a href="http://www.vashonsd.org">VISD</a></li>
-                </ul>
-            </div>
+            <a href="#" class="brand">Tech Badges</a>
+            <ul class="nav">
+                <li><a href="#">Home</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/gallery">Gallery</a></li>
+                <li><a href="http://www.vashonsd.org">VISD</a></li>
+            </ul>
+            <ul class="nav pull-right">
+                <li>{% if user %}Welcome, username!{% else %}You are not logged in.{% endif %}</li>
+            </ul>
         </div>
     </div>
 
