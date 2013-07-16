@@ -1,0 +1,44 @@
+{
+  "skillsets": [
+    {
+      "title": "Visual Thinker",
+      "short_description": "Visual thinkers can teach to the mind through the eye.",
+      "long_description": "Visual thinkers can teach with imagery. They use photographic tools to capture student work and bring it to the screen. They help students become visually literate by using cameras, drawing tools and a thought process."
+    },
+    {
+      "title": "Digital Thinker",
+      "short_description": "Digital thinkers take technology seriously as a subject.",
+      "long_description": "Digital thinkers take technology seriously as a subject. They assume students will not use technologies well without the guidance of trusted mentors."
+    },
+    {
+      "title": "Curator",
+      "short_description": "Curators preserve the work of students and other teachers.",
+      "long_description": "Curators preserve the work of students and other teachers to create a portrait of the work of our school life."
+    },
+    {
+      "title": "Presenter",
+      "short_description": "Presenters bring their teaching to life with images and sound.",
+      "long_description": "Presenters use their whiteboard, speakers and other tools to add richness to their teaching. They involve students in making a memorable classroom experience."
+    },
+    {
+      "title": "Google Driver",
+      "short_description": "Google Drivers help students create and share work in the cloud.",
+      "long_description": "Working with their own Google accounts and those of their students, Google Drivers make working on the computer a snap. They make it easy for students to create and share work of all kinds."
+    },
+    {
+      "title": "Film Buff",
+      "short_description": "Film buffs know how to use moving images as a tool for learning.",
+      "long_description": "Film buffs know how to use moving images as a tool for learning. Their students make movies and animations. They also learn the vocabulary of editing and telling stories in order."
+    },
+    {
+      "title": "Reporter",
+      "short_description": "Communicators their learning community in the loop.",
+      "long_description": "Communicators use email, class web sites and social media to broadcast what's happening in the life of the school. They keep parents, volunteers, colleagues and students in the loop."
+    },
+    {
+      "title": "Tech Leader",
+      "short_description": "Tech Leaders help other teachers boost their tech skills.",
+     "long_description": "Tech Leaders are ready to help other teachers. They spread the word, they do demonstrations and they set up systems and workflows."
+    }
+  ]
+}

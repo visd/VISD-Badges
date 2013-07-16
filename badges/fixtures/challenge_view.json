@@ -1,0 +1,73 @@
+{
+  "title": "Create a comic book with your students",
+  "long_description": "Creating a comic book entails taking a story apart into key actions and ordering them in a sequence. These are crucial literacy skills which grow much easier when kids are creating comic books.",
+  "skillset": {
+    "title": "Visual Thinker",
+    "icon": "visualthinker_icon",
+    "slug":"visualthinking",
+    "url": {
+      "href": "/skills/1",
+      "method": "GET"
+    }
+  },
+  "resources": [
+    {
+      "title": "Comic Books in the Classroom (New York Times)",
+      "description": "A New York Times article on an initiative to teach literacy through comic books.",
+      "url": "http://www.nytimes.com/2008/01/03/opinion/03thu4.html?_r=0"
+    },
+    {
+      "title": "Chogger: An Online Comic Book Creator",
+      "description": "",
+      "url": "http://chogger.com/creator"
+    },
+    {
+      "title": "Blank Comic Strip Layouts to Print",
+      "description": "Print these for your students and let them draw.",
+      "url": "http://donnayoung.org/art/comics.htm"
+    }
+  ],
+  "examples": [
+    {
+      "title": "Adventures in Science",
+      "caption": "This comic book turns the elements into super heroes doing brave work around the planet.",
+      "link": "www.example.com",
+      "user": {
+        "fullname": "Jane Teacher",
+        "url": "{\"href\":\"/users/2\",\"method\":\"GET\"}"
+      }
+    },
+    {
+      "title": "Just an Ordinary Day",
+      "caption": "Look carefully and you will learn that an ordinary day in this classroom is not so ordinary.",
+      "link": "www.example.com",
+      "user": {
+        "fullname": "Joe Teacher",
+        "url": "{\"href\":\"/users/3\",\"method\":\"GET\"}"
+      }
+    },
+    {
+        "title": "Comics in the Classroom",
+        "caption": "Students from Mountainview Elementary Lorem ipsum dolor sit amet, consectetur adipisicing elit. Iusto, labore.",
+        "link": "www.example.com"
+    }
+  ],
+  "tools": [
+    {
+      "title": "Microsoft Word",
+      "link": "http://office.microsoft.com/en-us/word/"
+    },
+    {
+      "title": "Digital Camera",
+      "link": "http://digital-photography-school.com/got-a-digital-camera-for-christmas-learn-how-to-use-it-here"
+    },
+    {
+      "title": "Drawing tools",
+      "link": "http://anitachowdry.wordpress.com/2012/04/13/shopping-for-a-basic-tool-kit-for-drawing/"
+    },
+    {
+      "title": "Scanner",
+      "link": "http://www.imagerunneradvance.com/c5000_manual/contents/case_001h/func.html"
+    }
+  ]
+}
