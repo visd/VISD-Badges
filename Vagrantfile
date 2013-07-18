@@ -54,7 +54,7 @@ Vagrant.configure("2") do |config|
   # View the documentation for the provider you're using for more
   # information on available options.
 
-  config.vm.provision :shell, :path => "Manifest/vagrant.bootstrap.sh"
+  config.vm.provision :shell, :path => "vagrant.bootstrap.sh"
 
 
   # Enable provisioning with Puppet stand alone.  Puppet manifests
