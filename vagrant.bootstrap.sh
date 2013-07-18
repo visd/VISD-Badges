@@ -14,7 +14,7 @@ apt-get -yq install apache2
 apt-get -yq install python-pip python-dev
 
 # Rereirements for app
-pip install -r /vagrant/Manifest/requirements.pip
+pip install -r /vagrant/requirements.txt
 
 # Shared Folder
 rm -rf /var/www

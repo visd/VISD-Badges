@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User, Group
 from django.template.defaultfilters import slugify
 from django.db import models
-from auth.models import UserProfile
+
 
 class Tag(models.Model):
     word = models.CharField(max_length=35)
@@ -35,7 +35,7 @@ class Tool(models.Model):
 
 class Entry(models.Model):
     id = models.AutoField(db_index=True, primary_key=True)
-    user = models.ForeignKey(UserProfile)
+    user = models.ForeignKey(User)
     title = models.CharField(max_length=30)
     caption = models.CharField(max_length=140)
     image = models.ImageField(upload_to='photos/%Y/%m/%d/')

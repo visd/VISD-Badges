@@ -13,4 +13,5 @@ def get_events_list():
     pass 
 
 def get_challenges_in_skill(skill):
-    return challenges = Challenge.objects.filter(skill=skill)
+    pass
+    # return challenges = Challenge.objects.filter(skill=skill)
