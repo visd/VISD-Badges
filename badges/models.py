@@ -1,7 +1,10 @@
 from django.contrib.auth.models import User, Group
 from django.template.defaultfilters import slugify
 from django.db import models
-from auth.models import UserProfile
+# from auth.models import UserProfile
+
+# Note from AJ: to make the syncdb command work I had to comment out UserProfile -- 
+# I believe it's deprecated in 1.5?
 
 class Tag(models.Model):
     word = models.CharField(max_length=35)
@@ -35,7 +38,7 @@ class Tool(models.Model):
 
 class Entry(models.Model):
     id = models.AutoField(db_index=True, primary_key=True)
-    user = models.ForeignKey(UserProfile)
+    # user = models.ForeignKey(UserProfile)
     title = models.CharField(max_length=30)
     caption = models.CharField(max_length=140)
     image = models.ImageField(upload_to='photos/%Y/%m/%d/')
@@ -45,8 +48,9 @@ class Entry(models.Model):
     challenge = models.ForeignKey('Challenge')
 
     def __unicode__(self):
-        return "%(id)s, %(user)s: %(title)s" % locals()
-
+        # return "%(id)s, %(user)s: %(title)s" % locals()
+        return "%s" % self.title
+        
 
 class Challenge(models.Model):
     title = models.CharField(db_index=True, max_length=30, unique=True)

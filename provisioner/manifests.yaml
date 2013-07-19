@@ -1,0 +1,52 @@
+manifests:    
+    - title: small
+      description: A small population of instances per model.
+      premake:    
+      - factory: SkillsetFactory
+        count: 3
+        children:
+          - factory: ChallengeFactory
+            count: 4
+            parent_field: skill
+            children:
+              - factory: ResourceFactory
+                count: 3
+                parent_field: challenges
+              - factory: EntryFactory
+                count: 5
+                parent_field: challenge
+      postadd:
+      - factory: ToolFactory
+        count: 4
+        targetmodel: Challenge
+        targetfield: tools
+      - factory: TagFactory
+        count: 2
+        targetmodel: Challenge
+        targetfield: tags
+
+    - title: medium
+      description: Closer to the a realistic size of the database at about 1 year in.
+      premake:    
+      - factory: SkillsetFactory
+        count: 8
+        children:
+          - factory: ChallengeFactory
+            count: 10
+            parent_field: skill
+            children:
+              - factory: ResourceFactory
+                count: 6
+                parent_field: challenges
+              - factory: EntryFactory
+                count: 10
+                parent_field: challenge
+      postadd:
+      - factory: ToolFactory
+        count: 4
+        targetmodel: Challenge
+        targetfield: tools
+      - factory: TagFactory
+        count: 3
+        targetmodel: Challenge
+        targetfield: tags
