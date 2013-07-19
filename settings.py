@@ -131,9 +131,12 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
     'rest_framework',
+    'django_extensions',
     'api',
     'badges',
     'auth_fix',
+    'events',
+    'provisioner'
 )
 
 # A sample logging configuration. The only tangible logging
