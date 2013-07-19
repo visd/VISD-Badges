@@ -6,7 +6,7 @@ Lists the manifests available
 from django.core.management.base import NoArgsCommand, CommandError
 from optparse import make_option
 
-from provisioner import populate
+from build import populate
 
 class Command(NoArgsCommand):
     help = "Lists available manifests."

@@ -1,10 +1,9 @@
 from django.test import TestCase
 from django.template import Context, Template
 
-from core.tests import factories as corefactories
-from core.models import Challenge
+from build import factories as corefactories
+from badges.models import Challenge
 
-from events.tests import factories as eventfactories
 from events import processors
 from events.models import Event
 

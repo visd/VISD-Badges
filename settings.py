@@ -136,7 +136,7 @@ INSTALLED_APPS = (
     'badges',
     'auth_fix',
     'events',
-    'provisioner'
+    'build'
 )
 
 # A sample logging configuration. The only tangible logging
@@ -167,6 +167,10 @@ LOGGING = {
         },
     }
 }
+
+TEMPLATE_CONTEXT_PROCESSORS += (
+    'events.context_processors.return_latest_events',
+    )
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),

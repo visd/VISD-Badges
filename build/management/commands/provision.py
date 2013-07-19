@@ -7,7 +7,7 @@ import pprint
 from django.core.management.base import LabelCommand, CommandError
 from optparse import make_option
 
-from provisioner import populate
+from build import populate
 
 class Command(LabelCommand):
     args = '<manifest>'
