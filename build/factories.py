@@ -4,15 +4,26 @@ from django.template.defaultfilters import slugify
 
 import factory
 
-from fuzzers import FishFuzz, HexFuzz, SlugFuzz
+from fuzzers import FishFuzz, HexFuzz, SlugFuzz, FirstNameFuzz, LastNameFuzz
 
 from badges import models
+from django.contrib.auth.models import User, Group
 
 class TagFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = models.Tag
 
     word = SlugFuzz()
 
+
+class UserFactory(factory.django.DjangoModelFactory):
+    FACTORY_FOR = User
+
+    first_name = FirstNameFuzz()
+    last_name = LastNameFuzz()
+    username = factory.LazyAttribute(lambda t: ('%s%s' % (t.first_name[:1], t.last_name)).lower())
+    password = HexFuzz()
+    email = factory.LazyAttribute(lambda t: '%s@vashonsd.org' % t.username)
+    
 
 class ToolFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = models.Tool
@@ -56,10 +67,11 @@ class ResourceFactory(factory.django.DjangoModelFactory):
 class EntryFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = models.Entry
 
-    # user = models.ForeignKey(UserProfile)
+    user = factory.SubFactory(UserFactory)
     title = factory.LazyAttributeSequence(lambda t, n: "Entry #%d for %s" % (n, t.challenge))
     caption = "Students used two weeks of filming time to create this sped-up view of a plant's growth."
     # image = factory.django.ImageField(filename="example")
     url_link = "http://www.example.com"
     url_title = "How This Was Done"
     challenge = factory.SubFactory(ChallengeFactory)
+

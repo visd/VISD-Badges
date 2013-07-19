@@ -168,9 +168,9 @@ LOGGING = {
     }
 }
 
-TEMPLATE_CONTEXT_PROCESSORS += (
-    'events.context_processors.return_latest_events',
-    )
+# TEMPLATE_CONTEXT_PROCESSORS += (
+#     'events.context_processors.return_latest_events',
+#     )
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),

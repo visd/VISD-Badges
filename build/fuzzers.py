@@ -1,6 +1,10 @@
-from factory import fuzzy
 import random
 import string
+
+import names
+
+from factory import fuzzy
+
 
 class FishFuzz(fuzzy.BaseFuzzyAttribute):
 
@@ -27,9 +31,22 @@ class HexFuzz(fuzzy.BaseFuzzyAttribute):
         return hex(random.randint(1000,100000))
 
 class SlugFuzz(fuzzy.BaseFuzzyAttribute):
-    """
-    Returns a random slug of random length from 3 to 10
+    """ Returns a random slug of random length from 3 to 10
     """
 
     def fuzz(self):
         return ''.join(random.choice(string.lowercase) for i in range(random.randint(3,10)))
+
+class FirstNameFuzz(fuzzy.BaseFuzzyAttribute):
+    """ Returns a first name, from the names module.
+    """
+
+    def fuzz(self):
+        return names.get_first_name()
+
+class LastNameFuzz(fuzzy.BaseFuzzyAttribute):
+    """ Returns a last name, from the names module.
+    """
+
+    def fuzz(self):
+        return names.get_last_name()
