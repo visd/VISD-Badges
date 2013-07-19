@@ -9,6 +9,7 @@ import factory
 from . import factories
 
 from badges import models
+from django.contrib.auth.models import User
 
 result_list=[]
 
@@ -81,6 +82,7 @@ def clear_data():
     for mod in ['Tool', 'Challenge', 'Skillset','Entry','Tag','Resource']:
         m = getattr(models, mod)
         m.objects.all().delete()
+        User.objects.all().delete()
 
 
 def load_manifest():
