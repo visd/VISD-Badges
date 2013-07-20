@@ -136,7 +136,8 @@ INSTALLED_APPS = (
     'badges',
     'auth_fix',
     'events',
-    'build'
+    'build',
+    'custom'
 )
 
 # A sample logging configuration. The only tangible logging
