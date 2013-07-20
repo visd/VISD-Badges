@@ -1,4 +1,4 @@
-# Django settings for VISD_Badges project.
+from django.conf import global_settings
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -108,6 +108,12 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
+
+TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
+    'events.context_processors.return_latest_events',
+)
+
+
 ROOT_URLCONF = 'urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
@@ -169,9 +175,6 @@ LOGGING = {
     }
 }
 
-# TEMPLATE_CONTEXT_PROCESSORS += (
-#     'events.context_processors.return_latest_events',
-#     )
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),
