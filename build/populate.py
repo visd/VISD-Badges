@@ -78,23 +78,27 @@ def add_randomly_to_targets(target_model, target_field, list_to_add):
     return result_log
 
 
-def clear_data():
-    for mod in ['Tool', 'Challenge', 'Skillset','Entry','Tag','Resource']:
+def clear_data(mod_list = ['Tool', 'Challenge', 'Skillset','Entry','Tag','Resource']):
+    """ Used to delete all instances of models. 
+
+    Pass a different list to delete a subset.
+    """
+    for mod in mod_list:
         m = getattr(models, mod)
         m.objects.all().delete()
         User.objects.all().delete()
 
 
 def load_manifest():
+    """ Loads manifest data from the YAML file.
+    """
     f = open(path.join(path.dirname(path.realpath(__file__)),'manifests.yaml'))
     f = yaml.load(f)
-    # f = Struct(f)
     return f
 
 
 def install_fixtures(choice='small', reset=True):
-    """
-    This is the dispatcher for loading the manifest, creating new fixtures and dependents,
+    """ This is the dispatcher for loading the manifest, creating new fixtures and dependents,
     and creating new fixture to related to existing models.
     """    
     result = []

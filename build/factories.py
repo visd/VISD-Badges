@@ -8,6 +8,8 @@ from fuzzers import FishFuzz, HexFuzz, SlugFuzz, FirstNameFuzz, LastNameFuzz
 
 from badges import models
 from django.contrib.auth.models import User, Group
+from events.models import Event
+from events.event_types import EVENT_TYPES
 
 class TagFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = models.Tag
@@ -75,3 +77,12 @@ class EntryFactory(factory.django.DjangoModelFactory):
     url_title = "How This Was Done"
     challenge = factory.SubFactory(ChallengeFactory)
 
+class EventFactory(factory.django.DjangoModelFactory):
+    FACTORY_FOR = Event
+
+
+def fetch_event_types():
+    for (key, item) in EVENT_TYPES.items():
+        event_type = key
+        resource = item['object']
+        print "Event Type: %s, Resource: %s" % (event_type, resource)
