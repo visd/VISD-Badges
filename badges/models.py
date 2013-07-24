@@ -6,6 +6,7 @@ from django.db import models
 # Note from AJ: to make the syncdb command work I had to comment out UserProfile -- 
 # I believe it's deprecated in 1.5?
 
+
 class Tag(models.Model):
     word = models.CharField(max_length=35)
     slug = models.SlugField()
@@ -18,6 +19,7 @@ class Tag(models.Model):
     def save(self, *args, **kwargs):
             self.slug = slugify(self.word)
             super(Tag, self).save(*args, **kwargs)
+
 
 class Tool(models.Model):
     title = models.CharField(db_index=True, max_length=30, unique=True)

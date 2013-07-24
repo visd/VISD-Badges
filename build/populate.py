@@ -29,6 +29,7 @@ Still to do:
   resource.
 """
 
+
 def depthFirstTraverse(n, parent=None):
     """This walks recursively through the given tree, calling on factories and telling subnodes to call on factories.
 
@@ -39,7 +40,7 @@ def depthFirstTraverse(n, parent=None):
         inst = make_factory(n['factory'], 
                             parent_field=n.get('parent_field'),
                             parent=parent)
-        result_list.append('Created %s from %s' % (str(inst),n['factory']))
+        result_list.append(inst)
 
         if n.get('children'):
             for child in n['children']:
@@ -53,9 +54,9 @@ def make_factory(factory_class, parent_field=None, parent=None):
     c = getattr(factories, factory_class)
     
     if parent_field is not None:
-        return factory.create(c, **{parent_field: parent})
+        return factory.build(c, **{parent_field: parent})
     else:
-        return factory.create(c)
+        return factory.build(c)
 
 
 def add_randomly_to_targets(target_model, target_field, list_to_add):
@@ -97,7 +98,7 @@ def load_manifest():
     return f
 
 
-def install_fixtures(choice='small', reset=True):
+def install_fixtures(choice='small', reset=True, save=True):
     """ This is the dispatcher for loading the manifest, creating new fixtures and dependents,
     and creating new fixture to related to existing models.
     """    
@@ -113,15 +114,22 @@ def install_fixtures(choice='small', reset=True):
     for node in chosen_manifest['premake']:
         result.append(depthFirstTraverse(node))
 
-    # Now that we have fixtures we can create the many-to-many relationships.
-    for node in chosen_manifest['postadd']:
-        # First, get a list of factory-made foos:
-        to_add = []
-        for c in range(node['count']):
-            to_add.append(make_factory(node['factory']))
-        # Then add a random numbers of foos to the targetmodel:
-        result.append(add_randomly_to_targets(node['targetmodel'], node['targetfield'], to_add))
+    # Check for saving. If it's on, save each instance.
     return result
+
+    if save:
+        for instance in result[0]:
+            instance.save()
+
+    # Now that we have fixtures we can create the many-to-many relationships.
+    # for node in chosen_manifest['postadd']:
+    #     # First, get a list of factory-made foos:
+    #     to_add = []
+    #     for c in range(node['count']):
+    #         to_add.append(make_factory(node['factory']))
+    #     # Then add a random numbers of foos to the targetmodel:
+    #     result.append(add_randomly_to_targets(node['targetmodel'], node['targetfield'], to_add))
+    # return result
 
 
 def list_manifests():

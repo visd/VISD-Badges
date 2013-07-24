@@ -14,6 +14,7 @@ class Event(models.Model):
     The type_info method looks up the information needed to render the event into human-readable form.
     """
     created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now_add=True)
     type = models.CharField(max_length=32)
     user = models.SlugField()
 

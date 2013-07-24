@@ -1,5 +1,3 @@
-import random
-
 from django.template.defaultfilters import slugify
 
 import factory
@@ -9,7 +7,7 @@ from fuzzers import FishFuzz, HexFuzz, SlugFuzz, FirstNameFuzz, LastNameFuzz
 from badges import models
 from django.contrib.auth.models import User, Group
 from events.models import Event
-from events.event_types import EVENT_TYPES
+
 
 class TagFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = models.Tag
@@ -25,7 +23,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     username = factory.LazyAttribute(lambda t: ('%s%s' % (t.first_name[:1], t.last_name)).lower())
     password = HexFuzz()
     email = factory.LazyAttribute(lambda t: '%s@vashonsd.org' % t.username)
-    
+
 
 class ToolFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = models.Tool
@@ -36,7 +34,7 @@ class ToolFactory(factory.django.DjangoModelFactory):
     slug = factory.LazyAttribute(lambda t: slugify(t.title))
 
 
-class SkillsetFactory(factory.Factory):
+class SkillsetFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = models.Skillset
     
     title = FishFuzz(1,3)
@@ -45,7 +43,7 @@ class SkillsetFactory(factory.Factory):
     id = factory.Sequence(lambda n: '1%d' % n)
 
 
-class ChallengeFactory(factory.django.DjangoModelFactory):        
+class ChallengeFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = models.Challenge
 
     skill = factory.SubFactory(SkillsetFactory)
@@ -77,12 +75,6 @@ class EntryFactory(factory.django.DjangoModelFactory):
     url_title = "How This Was Done"
     challenge = factory.SubFactory(ChallengeFactory)
 
+
 class EventFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Event
-
-
-def fetch_event_types():
-    for (key, item) in EVENT_TYPES.items():
-        event_type = key
-        resource = item['object']
-        print "Event Type: %s, Resource: %s" % (event_type, resource)

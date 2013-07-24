@@ -7,13 +7,13 @@ EVENT_TYPES = {
         "tags" : ["entry-approved","acheivement"],
         "level" : "user"
     },
-    "new-user" : {
-        "description" : "A new user joins the system.",
-        "object" : "profile",
-        "eventstring" : "<a href='{{object.url}}'>{{user.fullname}}</a> joined the system.",
-        "tags" : ["system","new-user"],
-        "level" : "user"
-    },
+    # "new-user" : {
+    #     "description" : "A new user joins the system.",
+    #     "object" : "profile",
+    #     "eventstring" : "<a href='{{object.url}}'>{{user.fullname}}</a> joined the system.",
+    #     "tags" : ["system","new-user"],
+    #     "level" : "user"
+    # },
     "new-challenge" : {
         "description": "A new challenge in the system.",
         "object" : "challenge",
