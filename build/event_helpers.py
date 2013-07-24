@@ -93,10 +93,11 @@ def create_all_event_types(count=1):
             created_events.append(new_event)
     for event in created_events:
         event.save()
+    return created_events
 
 
 def randomize_dates(event):
     """Accepts an event and pushes its date backwards by a random amount.
     """
-    event.modified = datetime.now() - timedelta(hours=randint(0, 120))
+    event.modified = event.modified - timedelta(hours=randint(0, 120))
     return event

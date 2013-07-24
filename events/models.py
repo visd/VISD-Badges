@@ -69,7 +69,7 @@ class Event(models.Model):
         ordering = ['-created']
 
     def __unicode__(self):
-        return 'Type: %s, created %s' % (self.type, self.created.strftime('%B %d %Y'))
+        return 'Type: %s, modified %s' % (self.type, self.modified.strftime('%B %d %Y'))
 
 
 

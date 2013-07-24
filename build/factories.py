@@ -1,16 +1,39 @@
+import random
+
 from django.template.defaultfilters import slugify
 
 import factory
 
 from fuzzers import FishFuzz, HexFuzz, SlugFuzz, FirstNameFuzz, LastNameFuzz
 
-from badges import models
+from badges.models import Skillset, Challenge, Tag, Tool, Resource, Entry
 from django.contrib.auth.models import User, Group
 from events.models import Event
 
+from . import event_helpers
+
+
+def add_randomly_to_targets(target_model, target_field, list_to_add):
+    """ This accepts a target model, its many-to-many field, and a list of instances to add
+    via the many-to-many field.
+
+    It walks through all the objects of the target model, then adds a random collection of objects to add.
+    """
+    targets = target_model.objects.all()
+
+    result_log = []
+
+    for target in targets:
+        add_these = random.sample(list_to_add, random.randint(1,len(list_to_add)))
+        field = getattr(target, target_field)
+        field.add(*add_these)
+        result_log.append(target)
+
+    return result_log
+
 
 class TagFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.Tag
+    FACTORY_FOR = Tag
 
     word = SlugFuzz()
 
@@ -26,7 +49,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 
 
 class ToolFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.Tool
+    FACTORY_FOR = Tool
     
     title = SlugFuzz()
     url_link = "http://www.example.com"
@@ -35,7 +58,7 @@ class ToolFactory(factory.django.DjangoModelFactory):
 
 
 class SkillsetFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.Skillset
+    FACTORY_FOR = Skillset
     
     title = FishFuzz(1,3)
     short_description = factory.LazyAttribute(lambda t: "%s gets to have a short description." % t.title)
@@ -44,7 +67,7 @@ class SkillsetFactory(factory.django.DjangoModelFactory):
 
 
 class ChallengeFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.Challenge
+    FACTORY_FOR = Challenge
 
     skill = factory.SubFactory(SkillsetFactory)
     title = factory.LazyAttributeSequence(lambda t, n: "Challenge #%d for %s" % (n, t.skill))
@@ -54,7 +77,7 @@ class ChallengeFactory(factory.django.DjangoModelFactory):
 
 
 class ResourceFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.Resource
+    FACTORY_FOR = Resource
 
     challenges = factory.SubFactory(ChallengeFactory)
     title = factory.LazyAttributeSequence(lambda t, n: 'Resource #%03d for %s' % (n, t.challenges))
@@ -65,7 +88,7 @@ class ResourceFactory(factory.django.DjangoModelFactory):
 
     
 class EntryFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.Entry
+    FACTORY_FOR = Entry
 
     user = factory.SubFactory(UserFactory)
     title = factory.LazyAttributeSequence(lambda t, n: "Entry #%d for %s" % (n, t.challenge))
@@ -76,5 +99,38 @@ class EntryFactory(factory.django.DjangoModelFactory):
     challenge = factory.SubFactory(ChallengeFactory)
 
 
-class EventFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Event
+def AllTypesOfEvents(count):
+    return event_helpers.create_all_event_types(count=1)
+
+
+def these_globals():
+    return globals()
+
+
+def ManyToManyFactory(count=2, create=None, join_to=None, target_field=None):
+    """ This makes [count] of the factory given in [create],
+    then joins a random number of each one to the list of models in join_to.
+    """
+    result = []
+    joiners = []
+    factory = globals()[create]
+    for _ in range(count):
+        made = factory()
+        joiners.append(made)
+        result.append(made)
+    for joinee in join_to:
+        result.append(add_randomly_to_targets(
+                      globals()[joinee],
+                      target_field,
+                      joiners)
+                      )
+    return result
+
+
+def AddTagsToChallenges(count=2):
+    tags = []
+    result = []
+    for _ in range(count):
+        result.append(TagFactory())
+    result.append(add_randomly_to_targets(Challenge, 'tags', result))
+    return result

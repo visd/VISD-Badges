@@ -16,14 +16,13 @@ manifests:
                 count: 5
                 parent_field: challenge
       postadd:
-      - factory: ToolFactory
-        count: 4
-        targetmodel: Challenge
-        targetfield: tools
-      - factory: TagFactory
-        count: 2
-        targetmodel: Challenge
-        targetfield: tags
+      - factory: ManyToManyFactory
+        create: TagFactory
+        join_to: [Challenge]
+        target_field: tags
+        count: 3
+      - factory: AllTypesOfEvents
+        count: 3
 
     - title: medium
       description: Closer to the a realistic size of the database at about 1 year in.
@@ -50,3 +49,5 @@ manifests:
         count: 3
         targetmodel: Challenge
         targetfield: tags
+      events:
+        count: 2

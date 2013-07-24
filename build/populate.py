@@ -11,6 +11,8 @@ from . import factories
 from badges import models
 from django.contrib.auth.models import User
 
+from build import event_helpers
+
 result_list=[]
 
 """
@@ -59,31 +61,12 @@ def make_factory(factory_class, parent_field=None, parent=None):
         return factory.build(c)
 
 
-def add_randomly_to_targets(target_model, target_field, list_to_add):
-    """ This accepts a target model, its many-to-many field, and a list of instances to add
-    via the many-to-many field.
-
-    It walks through all the objects of the target model, then adds a random collection of objects to add.
-    """
-    m = getattr(models, target_model)
-    targets = m.objects.all()
-
-    result_log = []
-
-    for target in targets:
-        add_these = random.sample(list_to_add, random.randint(1,len(list_to_add)))
-        field = getattr(target, target_field)
-        field.add(*add_these)
-        result_log.append((target,add_these))
-
-    return result_log
-
-
-def clear_data(mod_list = ['Tool', 'Challenge', 'Skillset','Entry','Tag','Resource']):
+def clear_data(mod_list = ['Tool', 'Challenge', 'Skillset', 'Entry', 'Tag', 'Resource']):
     """ Used to delete all instances of models. 
-
-    Pass a different list to delete a subset.
     """
+
+    # Pass a different list to delete a subset.
+    
     for mod in mod_list:
         m = getattr(models, mod)
         m.objects.all().delete()
@@ -99,12 +82,14 @@ def load_manifest():
 
 
 def install_fixtures(choice='small', reset=True, save=True):
-    """ This is the dispatcher for loading the manifest, creating new fixtures and dependents,
+    """
+    This is the dispatcher for loading the manifest, creating new fixtures and dependents,
     and creating new fixture to related to existing models.
-    """    
-    result = []
+    """
+    
     manifests = load_manifest()['manifests']
 
+    # Finds the manifests whose title matches the given choice.
     chosen_manifest = [m for m in manifests if m['title'] == choice][0]
    
     if reset:
@@ -112,24 +97,21 @@ def install_fixtures(choice='small', reset=True, save=True):
     
     # First, create the fixtures from scratch, including fixtures related to those.
     for node in chosen_manifest['premake']:
-        result.append(depthFirstTraverse(node))
+        result = (depthFirstTraverse(node))
 
-    # Check for saving. If it's on, save each instance.
+    # # The 'postadd' phase is for calling factories that have to do more customized actions.
+    # # Look to the individual factories to see what they do.
+
+    for node in chosen_manifest['postadd']:
+        which_func = node.pop('factory')
+        # find the factory function specified in the manifest.
+        f = getattr(factories, which_func)
+        # now add the results of calling that function with the rest of the node as arguments.
+        print "calling %s with attributes %s" % (str(f),str(node))
+        result.append(f.__call__(**node))
+    
     return result
-
-    if save:
-        for instance in result[0]:
-            instance.save()
-
-    # Now that we have fixtures we can create the many-to-many relationships.
-    # for node in chosen_manifest['postadd']:
-    #     # First, get a list of factory-made foos:
-    #     to_add = []
-    #     for c in range(node['count']):
-    #         to_add.append(make_factory(node['factory']))
-    #     # Then add a random numbers of foos to the targetmodel:
-    #     result.append(add_randomly_to_targets(node['targetmodel'], node['targetfield'], to_add))
-    # return result
+    # Go and make the number of events specified in this manifest
 
 
 def list_manifests():
