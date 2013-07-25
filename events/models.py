@@ -14,6 +14,7 @@ class Event(models.Model):
     The type_info method looks up the information needed to render the event into human-readable form.
     """
     created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now_add=True)
     type = models.CharField(max_length=32)
     user = models.SlugField()
 
@@ -68,7 +69,7 @@ class Event(models.Model):
         ordering = ['-created']
 
     def __unicode__(self):
-        return 'Type: %s, created %s' % (self.type, self.created.strftime('%B %d %Y'))
+        return 'Type: %s, modified %s' % (self.type, self.modified.strftime('%B %d %Y'))
 
 
 
