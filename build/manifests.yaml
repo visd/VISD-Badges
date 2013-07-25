@@ -15,12 +15,18 @@ manifests:
               - factory: EntryFactory
                 count: 5
                 parent_field: challenge
+      - factory: UserFactory
+        count: 6
       postadd:
       - factory: ManyToManyFactory
         create: TagFactory
         join_to: [Challenge]
         target_field: tags
         count: 3
+      - factory: ManyToManyFactory
+        create: ToolFactory
+        join_to: [Challenge]
+        target_field: tools
       - factory: AllTypesOfEvents
         count: 3
 

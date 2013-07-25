@@ -21,15 +21,17 @@ def add_randomly_to_targets(target_model, target_field, list_to_add):
     """
     targets = target_model.objects.all()
 
-    result_log = []
+    results = []
+    log =''
 
     for target in targets:
         add_these = random.sample(list_to_add, random.randint(1,len(list_to_add)))
         field = getattr(target, target_field)
         field.add(*add_these)
-        result_log.append(target)
+        results.append(target)
+        log += '%s, added %s\n' % (str(target),str(add_these))
 
-    return result_log
+    return [results, log]
 
 
 class TagFactory(factory.django.DjangoModelFactory):
@@ -100,7 +102,7 @@ class EntryFactory(factory.django.DjangoModelFactory):
 
 
 def AllTypesOfEvents(count):
-    return event_helpers.create_all_event_types(count=1)
+    return (event_helpers.create_all_event_types(count=1))
 
 
 def these_globals():
@@ -113,24 +115,19 @@ def ManyToManyFactory(count=2, create=None, join_to=None, target_field=None):
     """
     result = []
     joiners = []
+    log = ''
     factory = globals()[create]
     for _ in range(count):
         made = factory()
         joiners.append(made)
         result.append(made)
+        log += str(made) + "\n"
     for joinee in join_to:
-        result.append(add_randomly_to_targets(
+        added = (add_randomly_to_targets(
                       globals()[joinee],
                       target_field,
                       joiners)
                       )
-    return result
-
-
-def AddTagsToChallenges(count=2):
-    tags = []
-    result = []
-    for _ in range(count):
-        result.append(TagFactory())
-    result.append(add_randomly_to_targets(Challenge, 'tags', result))
-    return result
+        log += added[1]
+        result.extend(added[0])
+    return [result, log]

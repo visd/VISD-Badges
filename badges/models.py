@@ -14,7 +14,7 @@ class Tag(models.Model):
     # challenges = models.ForeignKey('Challenge', related_name='Challenges')
 
     def __unicode__(self):
-        return self.word
+        return "Tag: %s" % self.word
 
     def save(self, *args, **kwargs):
             self.slug = slugify(self.word)
@@ -96,7 +96,7 @@ class Skillset(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
-        return self.title
+        return 'Skillset %s' % self.title
 
     def save(self, *args, **kwargs):
             self.slug = slugify(self.title)

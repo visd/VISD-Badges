@@ -81,9 +81,10 @@ def create_event(event_type):
     return register_event(model_instance, event_type, given_user=user)
 
 
-def create_all_event_types(count=1):
+def create_all_event_types(count=3):
     """ Pass in a count to create that many of each event type.
     """
+    log = ''
     event_list = fetch_event_types()
     created_events = []
     for _ in range(count):
@@ -91,9 +92,8 @@ def create_all_event_types(count=1):
             new_event = create_event(e)
             new_event = randomize_dates(new_event)
             created_events.append(new_event)
-    for event in created_events:
-        event.save()
-    return created_events
+            log += str(new_event) + "\n"
+    return [created_events, log]
 
 
 def randomize_dates(event):
