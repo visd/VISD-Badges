@@ -39,7 +39,9 @@ class Command(LabelCommand):
                                                )
             if options['verbosity'] == '2':
                 print result[1]
-            print "%d instances created." % len(result[0])
+            print "%d instances created%s." % (len(result[0]),
+                                               options['save'] and " and saved" or " but not saved"
+                                               )
         except CommandError:
             print "You have supplied an invalid option."
         except IndexError:

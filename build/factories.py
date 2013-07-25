@@ -45,7 +45,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     first_name = FirstNameFuzz()
     last_name = LastNameFuzz()
-    username = factory.LazyAttribute(lambda t: ('%s%s' % (t.first_name[:1], t.last_name)).lower())
+    username = factory.LazyAttribute(lambda t: ('%s_%s' % (t.first_name, t.last_name)).lower())
     password = HexFuzz()
     email = factory.LazyAttribute(lambda t: '%s@vashonsd.org' % t.username)
 

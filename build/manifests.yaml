@@ -27,6 +27,7 @@ manifests:
         create: ToolFactory
         join_to: [Challenge]
         target_field: tools
+        count: 3
       - factory: AllTypesOfEvents
         count: 3
 
@@ -46,14 +47,18 @@ manifests:
               - factory: EntryFactory
                 count: 10
                 parent_field: challenge
+      - factory: UserFactory
+        count: 6
       postadd:
-      - factory: ToolFactory
-        count: 4
-        targetmodel: Challenge
-        targetfield: tools
-      - factory: TagFactory
-        count: 3
-        targetmodel: Challenge
-        targetfield: tags
-      events:
-        count: 2
+      - factory: ManyToManyFactory
+        create: TagFactory
+        join_to: [Challenge]
+        target_field: tags
+        count: 5
+      - factory: ManyToManyFactory
+        create: ToolFactory
+        join_to: [Challenge]
+        target_field: tools
+        count: 5
+      - factory: AllTypesOfEvents
+        count: 6
