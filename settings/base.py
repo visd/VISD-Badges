@@ -1,25 +1,17 @@
 from django.conf import global_settings
+from os import path
+# import django
 
-DEBUG = True
-TEMPLATE_DEBUG = DEBUG
+PROJECT_ROOT = path.dirname(path.dirname(path.realpath(__file__)))
+BASE_APP_ROOT = path.join(PROJECT_ROOT, 'badges')
+# DJANGO_ROOT = path.dirname(path.realpath(django.__file__))
+
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
 
 MANAGERS = ADMINS
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'VISD_Badges.sql',                      # Or path to database file if using sqlite3.
-        # The following settings are not used with sqlite3:
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
-        'PORT': '',                      # Set to empty string for default.
-    }
-}
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
@@ -29,7 +21,7 @@ ALLOWED_HOSTS = []
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
 # In a Windows environment this must be set to your system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'America/Los_Angeles'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -50,7 +42,7 @@ USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/var/www/example.com/media/"
-MEDIA_ROOT = ''
+MEDIA_ROOT = path.join(BASE_APP_ROOT,'media')
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -61,7 +53,7 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
-STATIC_ROOT = '/var/www/static'
+STATIC_ROOT = path.join(BASE_APP_ROOT,'static')
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
@@ -120,6 +112,7 @@ ROOT_URLCONF = 'urls'
 WSGI_APPLICATION = 'wsgi.application'
 
 TEMPLATE_DIRS = (
+    path.join(BASE_APP_ROOT,'templates')
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -142,7 +135,6 @@ INSTALLED_APPS = (
     'badges',
     'auth_fix',
     'events',
-    'build',
     'custom'
 )
 
