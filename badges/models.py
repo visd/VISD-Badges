@@ -58,13 +58,11 @@ class Entry(models.Model):
 class Challenge(models.Model):
     title = models.CharField(db_index=True, max_length=30, unique=True)
     slug = models.SlugField()
-    skill = models.ForeignKey('Skillset')
+    skillset = models.ForeignKey('Skillset')
     short_description = models.CharField(max_length=140)
     long_description = models.CharField(max_length=600)
     tags = models.ManyToManyField(Tag)
-    resources = models.ManyToManyField('Resource')
     tools = models.ManyToManyField(Tool)
-    # entries = models.ManyToManyField(Entry)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def get_absolute_url(self):
@@ -86,7 +84,7 @@ class Resource(models.Model):
     description = models.CharField(max_length=140)
     thumb = models.URLField(max_length=300)
     created_at = models.DateTimeField(auto_now_add=True)
-    challenges = models.ForeignKey(Challenge)
+    challenge = models.ForeignKey(Challenge)
 
     def __unicode__(self):
         return self.title

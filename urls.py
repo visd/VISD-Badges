@@ -15,8 +15,8 @@ router.register(r'challenge', api_views.ChallengeViewSet)
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browseable API.
 urlpatterns = patterns('',
-    url(r'^skillsets$', badge_views.SkillsetsList.as_view(), name='skillsets-index'),
-    url(r'^skillsets$/?P<id>\w+$', badge_views.SkillsetsDetail.as_view(), name='skillsets-detail'),
+    url(r'^skillsets$', badge_views.skillset_list, name='skillsets-index'),
+    # url(r'^skillsets$/?P<id>\w+$', badge_views.SkillsetsDetail.as_view(), name='skillsets-detail'),
     url(r'^challenges/?P<id>\w+$', badge_views.challenges_detail, name='challenges-detail'),
     url(r'^api/', include(router.urls)),
     url(r'^api/auth/', include('rest_framework.urls', namespace='rest_framework'))
