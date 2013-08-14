@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User, Group
 from django.template.defaultfilters import slugify
 from django.db import models
+from django.core.urlresolvers import reverse
 # from auth.models import UserProfile
 
 # Note from AJ: to make the syncdb command work I had to comment out UserProfile -- 
@@ -65,6 +66,9 @@ class Challenge(models.Model):
     tools = models.ManyToManyField(Tool)
     # entries = models.ManyToManyField(Entry)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_absolute_url(self):
+        return reverse('challenges-detail', kwargs={'id':self.pk})
 
     def __unicode__(self):
         return self.title
