@@ -71,8 +71,8 @@ class SkillsetFactory(factory.django.DjangoModelFactory):
 class ChallengeFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Challenge
 
-    skill = factory.SubFactory(SkillsetFactory)
-    title = factory.LazyAttributeSequence(lambda t, n: "Challenge #%d for %s" % (n, t.skill))
+    skillset = factory.SubFactory(SkillsetFactory)
+    title = factory.LazyAttributeSequence(lambda t, n: "Challenge #%d for %s" % (n, t.skillset))
     slug = factory.LazyAttribute(lambda t: slugify(t.title))
     short_description = factory.LazyAttribute(lambda t: "%s gets a short description." % t.title)
     long_description = factory.LazyAttribute(lambda t: "%s consectetur Lorem ipsum dolor sit amet, consectetur adipisicing elit." % t.title) 
@@ -81,8 +81,8 @@ class ChallengeFactory(factory.django.DjangoModelFactory):
 class ResourceFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Resource
 
-    challenges = factory.SubFactory(ChallengeFactory)
-    title = factory.LazyAttributeSequence(lambda t, n: 'Resource #%03d for %s' % (n, t.challenges))
+    challenge = factory.SubFactory(ChallengeFactory)
+    title = factory.LazyAttributeSequence(lambda t, n: 'Resource #%03d for %s' % (n, t.challenge))
     url_link = "http://www.example.com"
     url_title = "Lorem ipsum dolor sit amet."
     description = "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Id itaque porro consequatur placeat adipisci?"
