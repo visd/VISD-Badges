@@ -15,40 +15,75 @@ and then:
 We condition these because we really do not want to see everything of everything we are looking at.
 The template system should just render what it's given and not try to make these kinds of decisions.
 
+Omissions are cumulative. The parser goes up the list from 0 up picking up fields to omit.
+
+You can specify 'unomit' to put something back.
 """
+
+from newviews.helpers import memoized
 
 VIEW_DEPTHS = {
     'skillsets': {
+        0: {},
+        1: {
 
+        },
+        2: {
+
+        }
     },
     'challenges': {
         0: {},
         1: {
-            'fields':
-                {'omit':[
+            'fields': {
+                'omit': [
                     'long_description','slug','created_at','entries','resources','tools','skillset'
-                    ]
-                 'extend':[
+                ],
+                'extend': [
                     'resources'
-                    ]
-                },
-            'methods':
-                {'omit':[
+                ]
+            },
+            'methods': {
+                'omit': [
                     'PUT'
-                    ]
-                }
+                ]
+            }
         },
         2: {
-            'fields':
-                {'omit':[
-                    'long_description','short_description','slug','created_at','entries','resources','tags','tools','skillset'
-                    ]
-                },
-            'methods': 
-                {'omit':[
-                    'PUT','DELETE'
-                    ]
-                }
+            'fields': {
+                'omit': [
+                    'tags','short_description'
+                ]
+            },
+            'methods': {
+                'omit': [
+                    'DELETE'
+                ]
+            }
         }
-    }
+    },
 }
+
+def compile_mod_to(mod_fragment, depth):
+    """Returns a dictionary with a set of fields to omit and a set of methods to omit. 
+    """
+    omit_dict = {'fields':set([]),'methods':set([])}
+    for this_depth in [v for (k,v) in sorted(mod_fragment.items()) if k<=depth]:
+        for key in this_depth:
+            omit_dict[key] = (set(this_depth[key].get('omit',[])) | omit_dict[key]) - set(this_depth[key].get('unomit',[]))
+    # Reconvert to lists.
+    return {k:list(v) for (k,v) in omit_dict.items()}
+
+
+def filter_permissions_for(resource, config, depth):
+    """ given a resource name, a config for that resource and a target depth, use VIEW_DEPTHS
+    to return a dictionary with fields and methods omitted.
+
+    Think of the result as foreshortened.
+    """
+    mod = VIEW_DEPTHS.get(resource)
+    if mod:
+        compiled_mod = compile_mod_to(mod, depth)
+        return compiled_mod
+    else:
+        return config

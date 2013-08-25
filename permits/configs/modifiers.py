@@ -11,17 +11,20 @@ Semantics are adapted from the chown command, so that:
 +w,-x = add write, subtract execute.
 """
 import collections
+import copy
+
+from group_mods import MODS
 
 from base import BASE_PERMISSIONS
 
 from visd_staff import VISD_STAFF_PERMISSIONS
 
 CONFIG_MAP = {
-    'visd-staff': VISD_STAFF_PERMISSIONS
+    'visd-staff': 'visd-staff'
 }
 
 def modify(original,modifier):
-    """ Accepts a single-digit original and a modifier string. Returns a new digit.
+    """ Accepts a single-digit original and a modifier string. Returns a string.
 
     >>> print modify(2,'+r')
     6
@@ -33,7 +36,7 @@ def modify(original,modifier):
     5
 
     """
-    original = int(original)
+    result = int(original)
     modifiers = modifier.split(',')
     for clause in modifiers:
         bitsum = 0
@@ -41,51 +44,49 @@ def modify(original,modifier):
         for term in list(clause[1:]):
             bitsum = bitsum|{'r':4,'w':2,'x':1}[term]
         if direction == "-":
-            original = original&~bitsum
+            result = result&~bitsum
         elif direction == "+":
-            original = original|bitsum
-    return original
+            result = result|bitsum
+    return str(result)
 
 def group_of(config):
     """ We're going to strip away all but the group permissions and return the new dictionary.
     """
-    for key in config:
-        if hasattr(config[key],'__iter__'):
-            config[key] = group_of(config[key].copy())
+    result_dict={}
+    for key, item in config.items():
+        if hasattr(item,'__iter__'):
+            result_dict[key] = group_of(item)
         else:
-            config[key] = config[key][-2]
-    return config
+            result_dict[key] = item[-2]
+    return result_dict
+
+def replace_group(original_group, modifier):
+    li = list(original_group)
+    li[-2] = modify(li[-2],modifier)
+    return ''.join(li)
 
 def modify_config(old_config,modifier):
     """ Walks through two dictionaries comparing them and adding and calling modify() as needed.
 
     """
-    for key in modifier.keys():
-        if key in old_config.keys():
-            if hasattr(modifier[key],'__iter__'):
-                old_config[key] = modify_config(old_config[key],modifier[key])
+    result={}
+    for key, item in old_config.items():
+        if key in modifier.keys():
+            if hasattr(modifier[key],'__iter__'):               
+                result[key] = modify_config(old_config[key],modifier[key])
             else:
-                old_config[key] = modify(old_config[key],modifier[key])
-        # else:
-        #     old_config[key] = modify(0,modifier[key])
-    return old_config
-
-
-    # for key in old_config.keys():
-    #     if key in modifier.keys():
-    #         if hasattr(old_config[key],'__iter__'):
-    #             old_config[key] = modify_config(old_config[key],modifier[key])
-    #         else:
-    #             old_config[key] = modify(old_config[key][-2], modifier[key])
-    return old_config
+                result[key] = replace_group(old_config[key],modifier[key])
+        else:
+            result[key] = item
+    return result
 
 def base_config(user_group):
-    # mod_config = CONFIG_MAP.get(user_group)
-    new_base = BASE_PERMISSIONS.copy()
-    # if mod_config:
-    #     print 'I can change by that one!'
-    #     new_base = modify_config(new_base,mod_config)
-    return new_base
+    group_listed = CONFIG_MAP.get(user_group)
+    print group_listed
+    if group_listed:
+        mod_config = MODS[group_listed]
+        new_base = modify_config(BASE_PERMISSIONS,mod_config)
+    return BASE_PERMISSIONS
 
 if __name__ == '__main__':
     import doctest

@@ -7,7 +7,7 @@ Views are constructed from the intersection of the desired fields in the
 from permits import methods as permit
 from badges.resource_configs import deverbose
 from importlib import import_module
-from view_configs.mods import VIEW_DEPTHS
+from view_configs.mods import filter_permissions_for
 
 from helpers import memoized
 
@@ -172,13 +172,10 @@ def get_instance(resource=None, instance=None,
 
         # We narrow the scope of the config to just this resource.
         this_config = config[resource]
+        
         # We narrow it by filtering it against the view for the current depth.
-        if VIEW_DEPTHS.get(resource):
-            if VIEW_DEPTHS[resource].get(depth):
-                new_config = condition_view(this_config,VIEW_DEPTHS[resource][depth])
-        else:
-            new_config=this_config
-        # We reduce it to just the digit for this user_role
+        new_config=filter_permissions_for(resource, this_config, depth)
+      
         new_config = permit.reduce_permissions_dictionary_to(user_role, new_config)        
 
         # Even an empty set will return this:
