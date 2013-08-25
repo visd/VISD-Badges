@@ -22,16 +22,33 @@ VIEW_DEPTHS = {
 
     },
     'challenges': {
-            0: {},
-            1: {'fields':
-                    {'omit':['long_description','slug','created_at','entries','resources','tools','skillset']},
-                'methods':
-                    {'omit':['PUT']}
+        0: {},
+        1: {
+            'fields':
+                {'omit':[
+                    'long_description','slug','created_at','entries','resources','tools','skillset'
+                    ]
+                 'extend':[
+                    'resources'
+                    ]
                 },
-            2: {'fields':
-                    {'omit':['long_description','short_description','slug','created_at','entries','resources','tags','tools','skillset']},
-                'methods': 
-                    {'omit':['PUT','DELETE']}
+            'methods':
+                {'omit':[
+                    'PUT'
+                    ]
+                }
+        },
+        2: {
+            'fields':
+                {'omit':[
+                    'long_description','short_description','slug','created_at','entries','resources','tags','tools','skillset'
+                    ]
+                },
+            'methods': 
+                {'omit':[
+                    'PUT','DELETE'
+                    ]
                 }
         }
+    }
 }
