@@ -76,6 +76,8 @@ class Entry(URLmixin, models.Model):
     url_link = models.URLField(max_length=300)
     url_title = models.CharField(max_length=140)
     created_at  = models.DateTimeField(auto_now_add=True)
+    tags = models.ManyToManyField(Tag, related_name='entries')
+    tools = models.ManyToManyField(Tool, related_name='entries')
     challenge = models.ForeignKey('Challenge', related_name='entries')
 
     collection = CollectionManager()
@@ -96,8 +98,8 @@ class Challenge(URLmixin, models.Model):
     skillset = models.ForeignKey('Skillset', related_name='challenges')
     short_description = models.CharField(max_length=140)
     long_description = models.CharField(max_length=600)
-    tags = models.ManyToManyField(Tag)
-    tools = models.ManyToManyField(Tool)
+    tags = models.ManyToManyField(Tag, related_name='challenges')
+    tools = models.ManyToManyField(Tool, related_name='challenges')
     created_at = models.DateTimeField(auto_now_add=True)
     
     collection = CollectionManager()
@@ -142,6 +144,7 @@ class Skillset(URLmixin, models.Model):
     short_description = models.CharField(max_length=140)
     long_description = models.CharField(max_length=600)
     created_at = models.DateTimeField(auto_now_add=True)
+    tags = models.ManyToManyField(Tag, related_name='skillsets')
 
     collection = CollectionManager()
     objects = models.Manager()

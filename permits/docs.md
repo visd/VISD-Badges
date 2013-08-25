@@ -89,7 +89,7 @@ For fields:
 - 4: Instances: read
 - 3: Instances: write, Listing: POST (perhaps invisible posting, as for logging or events)
 - 2: Instances: write
-- 1: Listing: GET (only metadata about a collection)
+- 1: Listing: Cannot get, but can traverse to individual resources.
 
 For methods:
 
