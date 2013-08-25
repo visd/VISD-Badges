@@ -4,32 +4,32 @@ from django.db import models
 from django.core.urlresolvers import reverse
 
 from .custom_managers import CollectionManager
+from model_mixins import URLmixin
 # from auth.models import UserProfile
+
+import django.db.models.options as options
+
+options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('schema',)
 
 # Note from AJ: to make the syncdb command work I had to comment out UserProfile -- 
 # I believe it's deprecated in 1.5?
 
-class memoized_property(object):
-    """A read-only @property that is only evaluated once.
-    See http://www.reddit.com/r/Python/comments/ejp25/cached_property_decorator_that_is_memory_friendly/
-    """
-    def __init__(self, fget, doc=None):
-        self.fget = fget
-        self.__doc__ = doc or fget.__doc__
-        self.__name__ = fget.__name__
-
-    def __get__(self, obj, cls):
-        if obj is None:
-            return self
-        obj.__dict__[self.__name__] = result = self.fget(obj)
-        return result
+# class Index(models.Model):
+#     sitename = models.CharField(max_length=32)
+#     tagline = models.CharField(max_length=255)
+#     site_owner = models.ForeignKey(User, related_name='sites')
+#     site_group = models.ForeignKey(User, related_name='sites')
 
 
-class Tag(models.Model):
+class Tag(URLmixin, models.Model):
+    # owner = models.ForeignKey(User, related_name='tags')
     word = models.CharField(max_length=35)
     slug = models.SlugField()
     created_at = models.DateTimeField(auto_now_add=True)
     # challenges = models.ForeignKey('Challenge', related_name='Challenges')
+
+    collection = CollectionManager()
+    objects = models.Manager()
 
     def __unicode__(self):
         return "Tag: %s" % self.word
@@ -38,8 +38,12 @@ class Tag(models.Model):
         self.slug = slugify(self.word)
         super(Tag, self).save(*args, **kwargs)
 
+    class Meta:
+        verbose_name=u'tag'
+        verbose_name_plural=u'tags'
 
-class Tool(models.Model):
+
+class Tool(URLmixin, models.Model):
     title = models.CharField(db_index=True, max_length=30, unique=True)
     slug = models.SlugField()
     url_link = models.URLField(max_length=300)
@@ -48,6 +52,9 @@ class Tool(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     # challenges = models.ForeignKey('Challenge', related_name='Challenges')
 
+    collection = CollectionManager()
+    objects = models.Manager()
+
     def __unicode__(self):
         return self.title
 
@@ -55,8 +62,12 @@ class Tool(models.Model):
         self.slug = slugify(self.title)
         super(Tool, self).save(*args, **kwargs)
 
+    class Meta:
+        verbose_name=u'tool'
+        verbose_name_plural=u'tools'
 
-class Entry(models.Model):
+
+class Entry(URLmixin, models.Model):
     id = models.AutoField(db_index=True, primary_key=True)
     user = models.ForeignKey(User)
     title = models.CharField(max_length=30)
@@ -67,12 +78,19 @@ class Entry(models.Model):
     created_at  = models.DateTimeField(auto_now_add=True)
     challenge = models.ForeignKey('Challenge', related_name='entries')
 
+    collection = CollectionManager()
+    objects = models.Manager()
+
     def __unicode__(self):
         # return "%(id)s, %(user)s: %(title)s" % locals()
-        return "%s" % self.title        
+        return "%s" % self.title   
+
+    class Meta:
+        verbose_name=u'entry'
+        verbose_name_plural=u'entries'     
         
 
-class Challenge(models.Model):
+class Challenge(URLmixin, models.Model):
     title = models.CharField(db_index=True, max_length=30, unique=True)
     slug = models.SlugField()
     skillset = models.ForeignKey('Skillset', related_name='challenges')
@@ -84,10 +102,6 @@ class Challenge(models.Model):
     
     collection = CollectionManager()
     objects = models.Manager()
-
-    @memoized_property
-    def url(self):
-        return "/%s/%s" % (self._meta.verbose_name_plural, self.pk)
 
     def __unicode__(self):
         return self.title
@@ -101,7 +115,7 @@ class Challenge(models.Model):
         verbose_name_plural = u'challenges'
 
 
-class Resource(models.Model):
+class Resource(URLmixin, models.Model):
     id = models.AutoField(db_index=True, primary_key=True)
     title = models.CharField(max_length=30)
     url_link = models.URLField(max_length=300)
@@ -111,11 +125,18 @@ class Resource(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     challenge = models.ForeignKey(Challenge, related_name='resources')
 
+    collection = CollectionManager()
+    objects = models.Manager()
+
     def __unicode__(self):
         return self.title
 
+    class Meta:
+        verbose_name = u'resource'
+        verbose_name_plural = u'resources'
 
-class Skillset(models.Model):
+
+class Skillset(URLmixin, models.Model):
     title = models.CharField(db_index=True, max_length=30, unique=True)
     slug = models.SlugField()
     short_description = models.CharField(max_length=140)
@@ -125,21 +146,14 @@ class Skillset(models.Model):
     collection = CollectionManager()
     objects = models.Manager()
 
-    @memoized_property
-    def url(self):
-        return "hey! you found my url!"
-
-    def challenges(self):
-        return self.challenge_set.objects.all()
-
     def __unicode__(self):
         return 'Skillset %s' % self.title
 
     class Meta:
         verbose_name = u'skillset'
         verbose_name_plural = u'skillsets'
+        schema = 'turkey'
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.title)
         super(Skillset, self).save(*args, **kwargs)
-

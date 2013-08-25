@@ -33,6 +33,6 @@ class CollectionManager(models.Manager):
 
     use_for_related_fields = True
 
-    def url(self):
+    def url(self, scoped=True):
         parent = self.__dict__.get('instance')
-        return '%s/%s' % (parent and ('/%s' % parent.url) or "", self.model._meta.verbose_name_plural)
+        return '%s/%s' % (scoped and (parent and ('%s' % parent.url)) or "", self.model._meta.verbose_name_plural)

@@ -1,7 +1,11 @@
 manifests:    
     - title: small
       description: A small population of instances per model.
-      premake:    
+      premake:  
+      - factory: GroupFactory
+        count: 5
+      - factory: UserFactory
+        count: 6  
       - factory: SkillsetFactory
         count: 3
         children:
@@ -15,8 +19,6 @@ manifests:
               - factory: EntryFactory
                 count: 5
                 parent_field: challenge
-      - factory: UserFactory
-        count: 6
       postadd:
       - factory: ManyToManyFactory
         create: TagFactory
@@ -30,6 +32,7 @@ manifests:
         count: 3
       - factory: AllTypesOfEvents
         count: 3
+
 
     - title: medium
       description: Closer to the a realistic size of the database at about 1 year in.

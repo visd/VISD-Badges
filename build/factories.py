@@ -4,7 +4,7 @@ from django.template.defaultfilters import slugify
 
 import factory
 
-from fuzzers import FishFuzz, HexFuzz, SlugFuzz, FirstNameFuzz, LastNameFuzz
+from fuzzers import FishFuzz, HexFuzz, SlugFuzz, FirstNameFuzz, LastNameFuzz, RandomExistingUser, RandomGroupAndChildren
 
 from badges.models import Skillset, Challenge, Tag, Tool, Resource, Entry
 from django.contrib.auth.models import User, Group
@@ -40,6 +40,12 @@ class TagFactory(factory.django.DjangoModelFactory):
     word = SlugFuzz()
 
 
+class GroupFactory(factory.django.DjangoModelFactory):
+    FACTORY_FOR = Group
+
+    name = factory.Iterator(['guest','visd-guest','visd-user','visd-staff','admin'])
+
+
 class UserFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = User
 
@@ -48,6 +54,17 @@ class UserFactory(factory.django.DjangoModelFactory):
     username = factory.LazyAttribute(lambda t: ('%s_%s' % (t.first_name, t.last_name)).lower())
     password = HexFuzz()
     email = factory.LazyAttribute(lambda t: '%s@vashonsd.org' % t.username)
+
+    # No users without groups!
+    @factory.post_generation
+    def groups(self, create, extracted, **kwargs):
+        if extracted:
+            # A list of groups were passed in, use them
+            for group in extracted:
+                self.groups.add(group)
+        else:
+            group_list = RandomGroupAndChildren().fuzz()
+            self.groups.add(*group_list)
 
 
 class ToolFactory(factory.django.DjangoModelFactory):
@@ -92,7 +109,7 @@ class ResourceFactory(factory.django.DjangoModelFactory):
 class EntryFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Entry
 
-    user = factory.SubFactory(UserFactory)
+    user = RandomExistingUser()
     title = factory.LazyAttributeSequence(lambda t, n: "Entry #%d for %s" % (n, t.challenge))
     caption = "Students used two weeks of filming time to create this sped-up view of a plant's growth."
     # image = factory.django.ImageField(filename="example")
@@ -100,14 +117,30 @@ class EntryFactory(factory.django.DjangoModelFactory):
     url_title = "How This Was Done"
     challenge = factory.SubFactory(ChallengeFactory)
 
-
 def AllTypesOfEvents(count):
     return (event_helpers.create_all_event_types(count=1))
 
+def add_groups_to_users(count):
+    """ Pulls a random group, finds its children, then goes through the users, assigning them groups.
+
+    Count is a throwaway parameter. Fix this someday.
+    """
+    from permissions.methods import get_child_groups
+    users = User.objects.all()
+    results = []
+    log = ''
+    for user in users:
+        group = Group.objects.order_by('?')[0]
+        allgroups = get_child_groups(group.name)
+        allgroups.append(group.name)
+        user.groups.add(*allgroups)
+        results.append(user)
+        log += '%s, added %s\n' % (str(user),str(allgroups))
+
+    return results
 
 def these_globals():
     return globals()
-
 
 def ManyToManyFactory(count=2, create=None, join_to=None, target_field=None):
     """ This makes [count] of the factory given in [create],

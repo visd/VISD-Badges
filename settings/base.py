@@ -131,12 +131,14 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'rest_framework',
     'django_extensions',
+    'social_auth',
     'api',
     'badges',
     'auth_fix',
     'events',
     'custom',
-    'permissions'
+    'permits',
+    'newviews'
 )
 
 # A sample logging configuration. The only tangible logging
@@ -168,6 +170,9 @@ LOGGING = {
     }
 }
 
+# These are settings for the permits system
+INDEX_OWNER = 'ajames@vashonsd.org'
+INDEX_GROUP = 'visd-group'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),

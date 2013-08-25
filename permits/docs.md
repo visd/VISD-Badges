@@ -71,10 +71,84 @@ It gets us every entry in the system. What are they entries for? We don't know b
 
 and without the permissions bit set to execute, we couldn't reach this entry to look at it.
 
-Also note that, as permissions are concerned, the nature of the relationship (parent, child, many) is unimportant.
+Incidentally, traversals are *only figured for children*. There is no such thing as blocking traversal to a parent! If it's in the URL, by definition you can traverse to it. So we also offer access to the parent resource (that is, resource+id), if there is one. (Read below about The Invisible Index for more on this point.)
 
 ### Instance level:
 
 An instance has no permissions of its own; it takes on the permissions of its class, and its attributes take on the permissions define for them at the class level.
 
 We change the permissions of an instance by changing its ownership or group membership.
+
+### Cheat sheet
+
+For fields:
+
+- 7: Instances: read and write, Listing: GET and POST
+- 6: Instances: read and write
+- 5: Instances: read, Listing: GET
+- 4: Instances: read
+- 3: Instances: write, Listing: POST (perhaps invisible posting, as for logging or events)
+- 2: Instances: write
+- 1: Listing: GET (only metadata about a collection)
+
+For methods:
+
+- 7: Can get a form, modify the field values, execute the method
+- 6: Can get a form, modify the field values, but not do anything
+- 5: Can get a form, read-only field values, execute the method
+- 4: Can get a form, read-only field values, but not do anything
+- 3: Gets no form, modify the field values, execute the method
+- 2: Gets no form, modify the field values, but not do anything
+- 1: Gets no form, read-only field values, execute the method.
+
+Let's use some examples per method:
+
+GET:
+
+- 5: User sees a link to GET this and can follow that link.
+- 1: User doesn't get a link to this, but can GET it anyway.
+
+In this way, whether an instance is read-only for a particular user is: permission&1
+Whether we can get a link to that instance is: permission&4
+
+In the case of GET, the write bit is of undetermined use.
+
+PUT:
+
+- 7: User sees a link to modify this instance, get form with editable fields (based on +/-w per field), and can submit the form.
+- 5: User sees a button to PUT this resource somewhere predetermined (e.g., 'add to my favorites')
+- 1: Some action the user takes silently PUTs this resource somewhere. Also the user could do a manual PUT without the link.
+
+DELETE:
+
+- 4: User gets a button to delete this thing.
+- 1: An invisible delete, again permissible from carefully constructed http calls. Beware. But we may need this sort of call to be triggered silently.
+
+Just as in POSIX, we may have to extend the bit system so we have special setuid or setgid bits. Not if we can help it, though. 
+
+## Sites, or the invisible index
+
+In visible terms, there is a difference between a URL like:
+
+/entries
+
+and one like:
+
+/challenges/46/entries
+
+The first is not scoped, and the second is. But this needs to be an illusion. Why?
+
+We're using permissions to configure which traversals are possible from which scope. But we can't do this if the scope does not exist. So we make an invisible one, 'index'. Now we can define which resources we can traverse to directly from the index.
+
+Actually, we need to be careful. Because we *can* go to:
+
+/challenges/46
+
+but not to:
+
+/challenges
+
+So from the scope of index, we use the permisson 4 (r--), which lets us access what's in the directory but not list it directly. Of course if we want to be able to write to files we can +w.
+
+
+

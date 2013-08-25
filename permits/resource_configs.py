@@ -1,5 +1,5 @@
 BASE_RESOURCES = {
-    'skillset': {
+    'skillsets': {
         'app': 'badges',
         'model': 'Skillset',
         'factory': 'SkillsetFactory',

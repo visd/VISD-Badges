@@ -14,8 +14,6 @@ def index(request, **kwargs):
 
     return render(request, 'base.html', {'user': 'Thane Gill', })
 
-
-
 def skillset_objects():
     prefetch_list = ['challenges']
     return {'objects': [
