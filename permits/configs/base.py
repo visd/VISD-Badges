@@ -90,9 +90,9 @@ BASE_PERMISSIONS = {
             'word': '0644',
             'slug': '0000',
             'created_at': '0000',
-            'challenges': '0755',
-            'resources': '0755',
-            'skillsets': '0755'
+            'challenges': '0555',
+            'resources': '0555',
+            'skillsets': '0555'
         },
         'methods': {
             'PUT': '0700',
@@ -108,9 +108,9 @@ BASE_PERMISSIONS = {
             'url_title': '0644',
             'icon': '0644',
             'created_at': '0000',
-            'challenges': '0755',
-            'resources': '0755',
-            'skillsets': '0755'
+            'challenges': '0555',
+            'resources': '0555',
+            'skillsets': '0555'
         },
         'methods': {
             'PUT': '0700',
@@ -132,7 +132,8 @@ BASE_PERMISSIONS = {
             'last_name':'0640',
             'email':'0640',
             'username':'0440',
-            'groups':'0550'
+            'groups':'0550',
+            'entries': '0555'
         },
         'methods': {
             'PUT': '0700',
