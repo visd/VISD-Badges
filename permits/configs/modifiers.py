@@ -51,6 +51,8 @@ def modify(original,modifier):
 
 def group_of(config):
     """ We're going to strip away all but the group permissions and return the new dictionary.
+
+    SLATED FOR REMOVAL.
     """
     result_dict={}
     for key, item in config.items():
@@ -61,6 +63,13 @@ def group_of(config):
     return result_dict
 
 def replace_group(original_group, modifier):
+    """
+    >>> print modifiers.replace_group('0700','+rwx')
+    0770
+
+    >>> print modifiers.replace_group('0520','+r,-w')
+    0540
+    """
     li = list(original_group)
     li[-2] = modify(li[-2],modifier)
     return ''.join(li)
@@ -80,13 +89,18 @@ def modify_config(old_config,modifier):
             result[key] = item
     return result
 
-def base_config(user_group):
-    group_listed = CONFIG_MAP.get(user_group)
-    print group_listed
+def base_config(user_group=None):
+    """ If we recognize this group, then we'll send out a new modified version of BASE_PERMISSIONS.
+
+    Otherwise, you'll just get BASE_PERMISSIONS.
+    """
+    group_listed = user_group and CONFIG_MAP.get(user_group) or None
     if group_listed:
         mod_config = MODS[group_listed]
         new_base = modify_config(BASE_PERMISSIONS,mod_config)
-    return BASE_PERMISSIONS
+        return new_base
+    else:
+        return BASE_PERMISSIONS
 
 if __name__ == '__main__':
     import doctest

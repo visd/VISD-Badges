@@ -88,7 +88,7 @@ def sorted_fields_of(filtered_config):
                     available.append('POST')
                 if v&4:
                     available.append('GET')
-                result['traversals'].append({'url': k,'methods':[available]})
+                result['traversals'].append({'url': k,'methods':available})
             else:
                 if v&4:
                     result['fields']['read'].append(k)

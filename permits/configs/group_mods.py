@@ -55,7 +55,7 @@ MODS = {
                 'image': '+w',
                 'url_link': '+w',
                 'url_title': '+w',
-                'created_at': '0444',
+                'created_at': '+r',
                 'challenge': '+rw'
             },
             'methods': {

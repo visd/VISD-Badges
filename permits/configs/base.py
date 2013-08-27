@@ -34,8 +34,6 @@ BASE_PERMISSIONS = {
             'title': '0640',
             'short_description': '0640',
             'long_description': '0640',
-            # 'owner': '0640',
-            # 'group': '0600',
             'slug': '0400',
             'created_at': '0000',
             'skillset': '0600',
@@ -71,11 +69,11 @@ BASE_PERMISSIONS = {
     'entries': {
         'fields': {
             'user': '0444',
-            'title': '0744',
-            'caption': '0744',
-            'image': '0744',
-            'url_link': '0744',
-            'url_title': '0744',
+            'title': '0644',
+            'caption': '0644',
+            'image': '0644',
+            'url_link': '0644',
+            'url_title': '0644',
             'created_at': '0444',
             'challenge': '0600'
         },
@@ -122,23 +120,23 @@ BASE_PERMISSIONS = {
         'fields': {
             'created': '0400',
             'modified': '0400',
-            'user': '0550',
+            'user': '0440',
             'tags': '0555'
         }
-    },
-    'users': {
-        'fields': {
-            'first_name':'0640',
-            'last_name':'0640',
-            'email':'0640',
-            'username':'0440',
-            'groups':'0550',
-            'entries': '0555'
-        },
-        'methods': {
-            'PUT': '0700',
-            'GET': '0550',
-            'DELETE': '0500'
-        }
+    # },
+    # 'users': {
+    #     'fields': {
+    #         'first_name':'0640',
+    #         'last_name':'0640',
+    #         'email':'0640',
+    #         'username':'0440',
+    #         'groups':'0550',
+    #         'entries': '0555'
+    #     },
+    #     'methods': {
+    #         'PUT': '0700',
+    #         'GET': '0550',
+    #         'DELETE': '0500'
+    #     }
     }
 }
