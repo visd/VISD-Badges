@@ -23,15 +23,6 @@ You can specify 'unomit' to put something back.
 from newviews.helpers import memoized
 
 VIEW_DEPTHS = {
-    'skillsets': {
-        0: {},
-        1: {
-
-        },
-        2: {
-
-        }
-    },
     'challenges': {
         0: {},
         1: {
@@ -84,6 +75,12 @@ def filter_permissions_for(resource, config, depth):
     mod = VIEW_DEPTHS.get(resource)
     if mod:
         compiled_mod = compile_mod_to(mod, depth)
-        return compiled_mod
+        new_dict ={}
+        for key, value in config.items():
+            if compiled_mod.get(key):
+                new_dict[key] = {k:v for (k,v) in config[key].items() if k not in compiled_mod[key]}
+            else:
+                new_dict[key] = value
+        return new_dict
     else:
         return config

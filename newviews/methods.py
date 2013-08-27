@@ -153,7 +153,11 @@ def can_traverse(d):
 def get_instance(resource=None, instance=None, 
                     user=None, user_role=None, config=None,
                     depth=0):
-    """ Handles instances. Returns a dictionary of 
+    """ Handles instances. Returns a dictionary of fields, traversals and 
+        allowed methods for the user to perform on the instance.
+        
+        Think of a url such as '/foo/134'. This function would receive 'resource="foo",instance = <fooinstance> and so on.'
+
         If the method is anything but GET we don't recurse.
         Accepts, among many other parameters, an instance of the given resource type.
 
@@ -164,6 +168,8 @@ def get_instance(resource=None, instance=None,
     
     allowed = permit.scope_allows_instance(user_role,config[resource])
     if 'GET' in allowed:
+        # If we called this directly, we want to remove a redundant 'GET'
+        # from the list of methods we'll call to the user.
         if not depth:
             allowed.remove('GET')
         # Now we have to weigh the user vs. the object to determine the user role
@@ -174,9 +180,9 @@ def get_instance(resource=None, instance=None,
         this_config = config[resource]
         
         # We narrow it by filtering it against the view for the current depth.
-        new_config=filter_permissions_for(resource, this_config, depth)
-      
-        new_config = permit.reduce_permissions_dictionary_to(user_role, new_config)        
+        narrow_config = filter_permissions_for(resource, this_config, depth)
+        
+        new_config = permit.reduce_permissions_dictionary_to(user_role, narrow_config)        
 
         # Even an empty set will return this:
         result = {'meta':{},'fields':{},'traversals':[]}
@@ -220,6 +226,7 @@ def get_collection(parent=None, parent_id=None, resource=None,
     """
     allowed = permit.scope_allows_collection(resource,user_role,config[parent])
     if not depth:
+        # Since we're already GETting this, no need to offer it to the client again.
         allowed.remove('GET')
 
     this_model = model_for(resource)
