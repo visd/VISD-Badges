@@ -1,33 +1,22 @@
 {% extends "content.html" %}
 
 {% block mainpage %}
-       <ul class="breadcrumb">
-            <li><a href="/skillsets">Skillsets</a><span class="divider">></span></li>
-            <li class="active">{{title}}</li>
-        </ul>
-          <div id="mainpanel" class="container-fluid">
-                <div id="skill" class="row">
-                  <div>
-                      <img src="http://i.imgur.com/WrkwjSF.png" alt="" style="float:left; width:140px; margin:10px">
-                      <h1>{{title}}</h1>
-                      <p class="lead">{{ long_description}}</p>
-                  </div>
-              </div>
-              <div class="row-fluid">
-                  <div class="span3">
-                      <h4>{{ badgetitle}}s:</h4>
-                      {% for user in users %}
-                      <p>{{user.fullname}}</p>
-                      {% endfor %}
-                  </div>
-                  <div class="span9">
-                      <h2>{{  challenges|length }} challenges in this skillset:</h2>
-                      {% for challenge in challenges %}
-                      <div class="challenge-bar">
-                          <a href={{challenge.url.href}} title="{{challenge.short_description}}"><p class="lead">{{challenge.title}}</p></a>
-                      </div>
-                      {% endfor %}
-                  </div>
-              </div>
-          </div>
+<div id="mainpanel" class="container-fluid">
+  <div id="skillset" class="row-fluid">
+    {% include 'fragments/editbar.html' %}
+    <h2 class='page-header'>{{ fields.title }}</h2>
+    <p class="lead">{{ fields.long_description }}</p>
+
+    {% for t in traversals %}
+      {% if t.preload.meta.resource == 'challenges' %}
+        <div id="challenges" class='span11 offset1'>
+          <a href="{{ t.preload.meta.url }}"><h3>{{ t.preload.meta.count }} challenges in this skillset:</h3></a>
+            {% for challenge in t.preload.challenges %}
+              {% include 'fragments/challenge_listing.html' %}
+            {% endfor %}
+        </div>
+      {% endif %}
+    {% endfor t %}
+  </div>
+</div>
 {% endblock %}

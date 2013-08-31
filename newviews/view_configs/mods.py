@@ -43,7 +43,37 @@ VIEW_DEPTHS = {
         2: {
             'fields': {
                 'omit': [
-                    'tags','short_description'
+                    'tags'
+                ]
+            },
+            'methods': {
+                'omit': [
+                    'DELETE'
+                ]
+            }
+        }
+    },
+    'skillsets': {
+        0: {},
+        1: {
+            'fields': {
+                'omit': [
+                    'long_description', 'slug', 'created_at', 'tools'
+                ],
+                'extend': [
+                    'resources'
+                ]
+            },
+            'methods': {
+                'omit': [
+                    'PUT'
+                ]
+            }
+        },
+        2: {
+            'fields': {
+                'omit': [
+                    'tags', 'short_description'
                 ]
             },
             'methods': {

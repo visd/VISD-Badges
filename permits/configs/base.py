@@ -108,7 +108,8 @@ BASE_PERMISSIONS = {
             'created_at': '0000',
             'challenges': '0555',
             'resources': '0555',
-            'skillsets': '0555'
+            'skillsets': '0555',
+            'entries': '0555'
         },
         'methods': {
             'PUT': '0700',

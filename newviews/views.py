@@ -2,6 +2,8 @@ import json
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
+from django.template import RequestContext
+from django.shortcuts import render
 
 from permits.configs.modifiers import base_config
 from permits import methods as permit
@@ -23,7 +25,7 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
 
     # We painstakingly compute our user's highest security group.
     # For now we'll use a stub.
-    user_top_group = 'visd-user'
+    user_top_group = 'visd-staff'
     
     # We send off for a config conditioned by this group.
     permissions = base_config(user_top_group)
@@ -98,6 +100,7 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
             if request.method == 'GET':
                 context = methods.get_instance(resource=resource, instance=inst,
                         user=request.user, user_role=user_role, config=permissions)
+            template = '%s_detail.html' % resource
             if request.method == 'PUT':
                 pass
             if request.method == 'DELETE':
@@ -108,7 +111,10 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
         if request.method == 'GET':
             context = methods.get_collection(parent=parent, parent_id=parent_id, resource=resource,
                 user=request.user, user_role=user_role, config=permissions)
+            # magic naming again.
+            template = '%s_in_%s.html' % (resource,parent) 
         if request.method == 'POST':
             pass
-    data = json.dumps(context, sort_keys=True, indent=4)
-    return HttpResponse(data,content_type='application/json')
+    # data = json.dumps(context, sort_keys=True, indent=4)
+    # c = RequestContext(request, context)
+    return HttpResponse(render(request, template, context))

@@ -1,13 +1,11 @@
 manifests:    
     - title: small
       description: A small population of instances per model.
-      premake:  
-      - factory: GroupFactory
-        count: 5
+      premake:
       - factory: UserFactory
         count: 6  
       - factory: SkillsetFactory
-        count: 3
+        count: 7
         children:
           - factory: ChallengeFactory
             count: 4
@@ -22,15 +20,13 @@ manifests:
       postadd:
       - factory: ManyToManyFactory
         create: TagFactory
-        join_to: [Challenge]
+        join_to: [Challenge, Skillset, Entry]
         target_field: tags
         count: 3
       - factory: ManyToManyFactory
         create: ToolFactory
-        join_to: [Challenge]
+        join_to: [Challenge, Entry]
         target_field: tools
-        count: 3
-      - factory: AllTypesOfEvents
         count: 3
 
 

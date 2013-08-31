@@ -66,7 +66,7 @@ class RandomExistingUser(fuzzy.BaseFuzzyAttribute):
 class RandomGroupAndChildren(fuzzy.BaseFuzzyAttribute):
 
     def fuzz(self):
-        from permissions.methods import get_child_groups
+        from permits.methods import get_child_groups
         group = Group.objects.order_by('?')[0]
         allgroups = get_child_groups(group.name)
         allgroups.append(group.name)

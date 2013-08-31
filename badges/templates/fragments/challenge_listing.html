@@ -1,0 +1,12 @@
+<div class="well">
+    {% with meta=challenge.meta %}
+        {% include 'fragments/editbar.html' %}
+    {% endwith %}
+    <div>
+        <a href="{{challenge.meta.url}}"><h3>{{challenge.fields.title}}</h3></a>
+        <p class="lead">{{challenge.fields.short_description}}<p>
+    </div>
+    {% with traversals=challenge.traversals %}
+        {% include 'fragments/traversals.html' %}
+    {% endwith %}
+</div>

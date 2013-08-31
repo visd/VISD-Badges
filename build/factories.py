@@ -56,15 +56,15 @@ class UserFactory(factory.django.DjangoModelFactory):
     email = factory.LazyAttribute(lambda t: '%s@vashonsd.org' % t.username)
 
     # No users without groups!
-    @factory.post_generation
-    def groups(self, create, extracted, **kwargs):
-        if extracted:
-            # A list of groups were passed in, use them
-            for group in extracted:
-                self.groups.add(group)
-        else:
-            group_list = RandomGroupAndChildren().fuzz()
-            self.groups.add(*group_list)
+    # @factory.post_generation
+    # def groups(self, create, extracted, **kwargs):
+    #     if extracted:
+    #         # A list of groups were passed in, use them
+    #         for group in extracted:
+    #             self.groups.add(group)
+    #     else:
+    #         group_list = RandomGroupAndChildren().fuzz()
+    #         self.groups.add(*group_list)
 
 
 class ToolFactory(factory.django.DjangoModelFactory):
@@ -125,7 +125,7 @@ def add_groups_to_users(count):
 
     Count is a throwaway parameter. Fix this someday.
     """
-    from permissions.methods import get_child_groups
+    from permits.methods import get_child_groups
     users = User.objects.all()
     results = []
     log = ''

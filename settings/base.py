@@ -101,9 +101,9 @@ MIDDLEWARE_CLASSES = (
 )
 
 
-TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
-    'events.context_processors.return_latest_events',
-)
+# TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
+#     'events.context_processors.return_latest_events',
+# )
 
 
 ROOT_URLCONF = 'urls'

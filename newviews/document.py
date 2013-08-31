@@ -20,7 +20,9 @@ def meta_for(resource):
     return {'description':description or ''}
 
 def markdown_api(user_role, group=None, filename='api'):
-    filename = '_'.join([filename,user_role,group or ''])
+    filename = '_'.join([filename,user_role])
+    if group:
+        filename = '_'.join([filename,group])
     filename += '.md'
     api_dict = api_for(user_role, group)
     md = ['## Badges API']

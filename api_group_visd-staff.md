@@ -102,6 +102,10 @@ Required fields: title, challenge, url_link, caption, user, image, url_title
 
 Returns: created_at, title, challenge, url_link, caption, user, image, url_title
 
+    /tools/:id/entries - GET
+
+Returns: created_at, title, challenge, url_link, caption, user, image, url_title
+
     /resources/:id/entries - POST
 
 Required fields: title, challenge, url_link, caption, user, image, url_title

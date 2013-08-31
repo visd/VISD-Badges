@@ -1,0 +1,10 @@
+<div class='pull-right'>
+    {% for method in meta.methods %}
+      {% if method == 'PUT' %}
+          <a href="{{}}">Edit</a>
+      {% endif %}
+      {% if method == 'DELETE' %}
+          <a href="{{meta.url}}">Delete</a>
+      {% endif %}
+    {% endfor %}
+</div>  

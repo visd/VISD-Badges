@@ -1,0 +1,7 @@
+{% for t in traversals %}
+    {% for method in t.methods %}
+        {% if method == 'GET' %}
+            <a href="{{t.url}}">{{t.preload.meta.count}} {{t.preload.meta.resource}} available</a>
+        {% endif %}
+    {% endfor %}
+{% endfor %}
