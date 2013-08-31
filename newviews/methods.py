@@ -206,7 +206,7 @@ def get_instance(resource=None, instance=None,
         dictionaries around instead of instances and be many times more efficient with the database.
         Someday.
     """
-    
+
     allowed = permit.scope_allows_instance(user_role, config[resource])
     if 'GET' in allowed:
         # If we called this directly, we want to remove a redundant 'GET'
@@ -228,7 +228,7 @@ def get_instance(resource=None, instance=None,
 
         # Even an empty set will return this:
         result = {'meta': {}, 'fields': {}, 'traversals': []}
-        result['meta'] = {'url': instance.url, 'methods': allowed}
+        result['meta'] = {'url': instance.url, 'methods': allowed, 'tagged_with':[resource]}
 
         # Now we sort the config into the kind of dictionary we are looking
         # for:
