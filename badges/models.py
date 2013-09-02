@@ -1,17 +1,18 @@
 from django.contrib.auth.models import User, Group
 from django.template.defaultfilters import slugify
 from django.db import models
-from django.core.urlresolvers import reverse
+# from django.core.urlresolvers import reverse
 
 from .custom_managers import CollectionManager
 from model_mixins import URLmixin
+from helpers import memoized_property
 # from auth.models import UserProfile
 
 import django.db.models.options as options
 
 options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('schema',)
 
-# Note from AJ: to make the syncdb command work I had to comment out UserProfile -- 
+# Note from AJ: to make the syncdb command work I had to comment out UserProfile --
 # I believe it's deprecated in 1.5?
 
 # class Index(models.Model):
@@ -31,6 +32,10 @@ class Tag(URLmixin, models.Model):
     collection = CollectionManager()
     objects = models.Manager()
 
+    @memoized_property
+    def parent(self):
+        return None
+
     def __unicode__(self):
         return "Tag: %s" % self.word
 
@@ -39,8 +44,8 @@ class Tag(URLmixin, models.Model):
         super(Tag, self).save(*args, **kwargs)
 
     class Meta:
-        verbose_name=u'tag'
-        verbose_name_plural=u'tags'
+        verbose_name = u'tag'
+        verbose_name_plural = u'tags'
 
 
 class Tool(URLmixin, models.Model):
@@ -48,12 +53,16 @@ class Tool(URLmixin, models.Model):
     slug = models.SlugField()
     url_link = models.URLField(max_length=300)
     url_title = models.CharField(max_length=140)
-    icon = models.CharField(max_length=2) # Icon Font used?
+    icon = models.CharField(max_length=2)  # Icon Font used?
     created_at = models.DateTimeField(auto_now_add=True)
     # challenges = models.ForeignKey('Challenge', related_name='Challenges')
 
     collection = CollectionManager()
     objects = models.Manager()
+
+    @memoized_property
+    def parent(self):
+        return None
 
     def __unicode__(self):
         return self.title
@@ -63,8 +72,8 @@ class Tool(URLmixin, models.Model):
         super(Tool, self).save(*args, **kwargs)
 
     class Meta:
-        verbose_name=u'tool'
-        verbose_name_plural=u'tools'
+        verbose_name = u'tool'
+        verbose_name_plural = u'tools'
 
 
 class Entry(URLmixin, models.Model):
@@ -75,22 +84,26 @@ class Entry(URLmixin, models.Model):
     image = models.ImageField(upload_to='photos/%Y/%m/%d/')
     url_link = models.URLField(max_length=300)
     url_title = models.CharField(max_length=140)
-    created_at  = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     tags = models.ManyToManyField(Tag, related_name='entries')
     tools = models.ManyToManyField(Tool, related_name='entries')
     challenge = models.ForeignKey('Challenge', related_name='entries')
+
+    @memoized_property
+    def parent(self):
+        return self.challenge
 
     collection = CollectionManager()
     objects = models.Manager()
 
     def __unicode__(self):
         # return "%(id)s, %(user)s: %(title)s" % locals()
-        return "%s" % self.title   
+        return "%s" % self.title
 
     class Meta:
-        verbose_name=u'entry'
-        verbose_name_plural=u'entries'     
-        
+        verbose_name = u'entry'
+        verbose_name_plural = u'entries'
+
 
 class Challenge(URLmixin, models.Model):
     title = models.CharField(db_index=True, max_length=30, unique=True)
@@ -101,9 +114,13 @@ class Challenge(URLmixin, models.Model):
     tags = models.ManyToManyField(Tag, related_name='challenges')
     tools = models.ManyToManyField(Tool, related_name='challenges')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     collection = CollectionManager()
     objects = models.Manager()
+
+    @memoized_property
+    def parent(self):
+        return self.skillset
 
     def __unicode__(self):
         return self.title
@@ -130,6 +147,14 @@ class Resource(URLmixin, models.Model):
     collection = CollectionManager()
     objects = models.Manager()
 
+    @memoized_property
+    def parent(self):
+        return self.challenge
+
+    @memoized_property
+    def parent_model(cls):
+        return Challenge
+
     def __unicode__(self):
         return self.title
 
@@ -151,6 +176,10 @@ class Skillset(URLmixin, models.Model):
 
     def __unicode__(self):
         return 'Skillset %s' % self.title
+
+    @memoized_property
+    def parent(self):
+        return None
 
     class Meta:
         verbose_name = u'skillset'

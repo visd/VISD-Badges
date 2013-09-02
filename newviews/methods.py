@@ -49,7 +49,8 @@ def condition_view(original_dict, modifier):
     new_dict = {}
     for key in modifier.keys():
         if modifier[key].get('omit'):
-            new_dict[key] = {k: original_dict[key][k] for k in original_dict[key].keys() if k not in modifier[key]['omit']}
+            new_dict[key] = {k: original_dict[key][k] for k in original_dict[key].keys()
+                             if k not in modifier[key]['omit']}
     return new_dict
 
 
@@ -155,7 +156,8 @@ def hydrate(dictionary, instance, method):
     """
     result = {'fields': {}, 'traversals': []}
     if method == 'GET':
-        result['fields'] = [{f: getattr(instance, f) for f in dictionary['fields']['read']}]
+        for f in dictionary['fields']['read']:
+            result['fields'][f] = getattr(instance, f)
         for t in dictionary['traversals']:
             result['traversals'].append(
                 {'url': getattr(instance, t['url']).url(), 'method': t['method']})
@@ -168,7 +170,6 @@ def put_instance(resource=None, resource_id=None,
     """
     # get an instance from model + id.
     # new_resource = form.save(commit=False)
-    
 
 
 def delete_instance(resource=None, resource_id=None):
@@ -190,13 +191,14 @@ def can_traverse(d):
     return [k for k, v in d.iteritems() if v & 1 and v & 4]
 
 
-def get_instance(resource=None, instance=None,
+def get_instance(parent=None, parent_id=None,
+                 resource=None, instance=None,
                  user=None, user_role=None, config=None,
                  depth=0):
     """ Handles instances. Returns a dictionary of fields, traversals and
         allowed methods for the user to perform on the instance.
 
-        Think of a url such as '/foo/134'. This function would receive 
+        Think of a url such as '/foo/134'. This function would receive
         'resource="foo",instance = <fooinstance> and so on.'
 
         If the method is anything but GET we don't recurse.
@@ -228,7 +230,19 @@ def get_instance(resource=None, instance=None,
 
         # Even an empty set will return this:
         result = {'meta': {}, 'fields': {}, 'traversals': []}
-        result['meta'] = {'url': instance.url, 'methods': allowed, 'tagged_with':[resource]}
+        result['meta'] = {'url': instance.url,
+                          'methods': allowed,
+                          'tagged_with': [resource],
+                          'resource': resource}
+        # And now, the "I'd like to thank my parents" clause.
+        # There are two reasons why we might stuff a link to the parent in this dictionary.
+        # One is that this is exactly the resource asked for in the user's
+        # request.
+        if instance.parent:
+            if (not depth) or (instance.parent._meta.verbose_name_plural is not parent):
+                result['meta']['parent'] = {'resource': instance.parent._meta.verbose_name_plural,
+                                         'title': str(instance.parent), 'url': instance.parent.url
+                                         }
 
         # Now we sort the config into the kind of dictionary we are looking
         # for:
@@ -243,15 +257,18 @@ def get_instance(resource=None, instance=None,
             # 'preload' on this traversal.
             if VIEW_TRAVERSE_DEPTH - depth:
                 if t['url'] in can_traverse(new_config['fields']):
-                    traversal['preload'] = get_collection(parent=resource, parent_id=instance.pk,
-                                                          resource=t['url'],
-                                                          user=user, user_role=user_role,
-                                                          config=config, depth=depth + 1)
+                    traversal[
+                        'preload'] = get_collection(parent=resource, parent_id=instance.pk,
+                                                    resource=t['url'],
+                                                    user=user, user_role=user_role,
+                                                    config=config, depth=depth + 1)
             result['traversals'].append(traversal)
-        # result = hydrate(viewmap,instance,'GET')
-        if not depth:
+        # If depth is 0, we've already gotten this instance and don't need
+        # another link back.
+        if depth:
             result['traversals'].append(
                 {'url': '/%s' % resource, 'method': 'GET'})
+
         return result
 
 
@@ -305,13 +322,11 @@ def get_collection(parent=None, parent_id=None, resource=None,
     }
     }
     if not parent == 'index' and not depth:
-        result['traversals'] = ([{'url': parent_inst.url, 'method': 'GET'},
-                                 {'url': parent_model.collection.url(), 'method': 'GET'}])
+        result['traversals'] = [{'url': parent_inst.url, 'method': 'GET'}]
     if VIEW_TRAVERSE_DEPTH - depth:
         # now we have to send along a list of ready instances or we're going to clobber the database.
         # We're going to build a Q object so our queryset gets only the ones we're looking for.
         # For now
-        get_flag = None
         result[resource] = [get_instance(resource=resource, instance=inst,
                                          user=user, user_role=user_role, config=config,
                                          depth=depth + 1)

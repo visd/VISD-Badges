@@ -8,6 +8,8 @@ from badges.models import Challenge
 
 from build.factories import ChallengeFactory
 
+pp = pprint.PrettyPrinter()
+
 class ViewMethodTestCases(TestCase):
     def setUp(self):
         self.narrowedConfig = {
@@ -62,7 +64,6 @@ class ViewMethodTestCases(TestCase):
             }
         self.instance = ChallengeFactory.create()
 
-        self.pp = pprint.PrettyPrinter()
 
     def test_condition_view_removes_fields(self):
         self.modified = methods.condition_view(self.fullConfig,self.modifier)
@@ -102,5 +103,6 @@ class ViewMethodTestCases(TestCase):
     def test_get_instance(self):
         print '\n'
         print 'Getting an instance'
-        print(methods.get_instance(resource='challenges',instance=self.instance, user=None, user_role='group', 
-                                config=self.challenge_config, depth=0))
+        pp.pprint(methods.get_instance(resource='challenges', instance=self.instance,
+                                       user=None, user_role='group',
+                                       config=self.challenge_config, depth=0))

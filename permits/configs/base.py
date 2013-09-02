@@ -55,6 +55,8 @@ BASE_PERMISSIONS = {
             'url-title': '0644',
             'description': '0644',
             'challenge': '0644',
+            'challenge.title': '0444',
+            'challenge.url': '0444',
             'thumb': '0644',
             'created_at': '0400',
             'challenge': '0600',
