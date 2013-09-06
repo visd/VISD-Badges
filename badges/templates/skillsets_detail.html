@@ -7,16 +7,12 @@
     <h2 class='page-header'>{{ fields.title }}</h2>
     <p class="lead">{{ fields.long_description }}</p>
 
-    {% for t in traversals %}
-      {% if t.preload.meta.resource == 'challenges' %}
-        <div id="challenges" class='span11 offset1'>
-          <a href="{{ t.preload.meta.url }}"><h3>{{ t.preload.meta.count }} challenges in this skillset:</h3></a>
-            {% for challenge in t.preload.challenges %}
+    <div id="challenges" class='span11 offset1'>
+        <a href="{{ t.preload.meta.url }}"><h3>{{ challenges.meta.count }} challenges in this skillset:</h3></a>
+          {% for challenge in challenges.objects %}
               {% include 'fragments/challenge_listing.html' %}
-            {% endfor %}
-        </div>
-      {% endif %}
-    {% endfor t %}
+          {% endfor %}
+    </div>
   </div>
 </div>
 {% endblock %}

@@ -1,10 +1,10 @@
-<div>
+
     {% with meta=skillset.meta %}
         {% include 'fragments/editbar.html' %}
     {% endwith %}
     <div>
         <img style = "width:80%" src="http://i.imgur.com/WrkwjSF.png" alt=""></div>
-        <a href="{{skillset.meta.url}}"><h3>{{skillset.fields.title}}</h3></a>
+        <a href="{{skillset.meta.url}}"><h3>{{skillset.fields.title | title }}</h3></a>
         <p class="lead">{{skillset.fields.short_description}}<p>
     </div>
     <div>
@@ -12,5 +12,3 @@
             {% include 'fragments/traversals.html' %}
         {% endwith %}
     </div>
-</div>
-        

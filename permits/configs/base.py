@@ -17,11 +17,9 @@ BASE_PERMISSIONS = {
             'title': '0640',
             'short_description': '0640',
             'long_description': '0640',
-            # 'owner': '0640',
-            # 'group': '0600',
             'slug': '0400',
             'created_at': '0000',
-            'challenges': '0755'
+            'challenges': '0311'
         },
         'methods': {
             'PUT': '0500',
@@ -51,16 +49,13 @@ BASE_PERMISSIONS = {
     'resources': {
         'fields': {
             'title': '0644',
-            'url-link': '0644',
-            'url-title': '0644',
+            'url_link': '0644',
+            'url_title': '0644',
             'description': '0644',
             'challenge': '0644',
-            'challenge.title': '0444',
-            'challenge.url': '0444',
             'thumb': '0644',
             'created_at': '0400',
-            'challenge': '0600',
-            'entries': '0775'
+            'challenge': '0600'
         },
         'methods': {
             'PUT': '0700',
@@ -91,7 +86,7 @@ BASE_PERMISSIONS = {
             'slug': '0000',
             'created_at': '0000',
             'challenges': '0555',
-            'resources': '0555',
+            'entries': '0555',
             'skillsets': '0555'
         },
         'methods': {
@@ -109,8 +104,6 @@ BASE_PERMISSIONS = {
             'icon': '0644',
             'created_at': '0000',
             'challenges': '0555',
-            'resources': '0555',
-            'skillsets': '0555',
             'entries': '0555'
         },
         'methods': {
@@ -126,20 +119,20 @@ BASE_PERMISSIONS = {
             'user': '0440',
             'tags': '0555'
         }
-    # },
-    # 'users': {
-    #     'fields': {
-    #         'first_name':'0640',
-    #         'last_name':'0640',
-    #         'email':'0640',
-    #         'username':'0440',
-    #         'groups':'0550',
-    #         'entries': '0555'
-    #     },
-    #     'methods': {
-    #         'PUT': '0700',
-    #         'GET': '0550',
-    #         'DELETE': '0500'
-    #     }
+    },
+    'users': {
+        'fields': {
+            'first_name':'0640',
+            'last_name':'0640',
+            'email':'0640',
+            'username':'0440',
+            'groups':'0550',
+            'entries': '0555'
+        },
+        'methods': {
+            'PUT': '0700',
+            'GET': '0550',
+            'DELETE': '0500'
+        }
     }
 }

@@ -1,5 +1,8 @@
 <div class="well">
     {% with meta=challenge.meta %}
+        {% if meta.parent %}
+        <a href="{{ meta.parent.url}}">{{ meta.parent.title }}</a>
+        {% endif %}
         {% include 'fragments/editbar.html' %}
     {% endwith %}
     <div>

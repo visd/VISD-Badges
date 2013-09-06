@@ -25,11 +25,8 @@ just the count).
     - By the time fields reach the template, they can be nested for calls to the parent. So, for instance, an entry can have:
         `{'challenge':{'title':'blah', 'url':'/challenge/13', 'skillset':{'title':'blah', 'url':'/skillsets/56'}}}`
     Here we have our one case in which we count on the templating engine to figure out what to do with a url. But this is acceptable, in this case, because we know it will only ever be a GET, and by definition it is permissible.
-- 'traversals':
-    - [{'url': *String. The url of this traversal.*
-          - 'methods': [] *A list of available methods on this url. ('GET','PUT','DELETE')*
-          - 'preload': *The nested results of a GET on this url.*
-    - }]
+-  resource: (*Notice the missing quote marks!*)
+    - See the result under "collection."
 
 #### Collection:
     

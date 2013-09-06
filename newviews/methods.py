@@ -3,6 +3,7 @@ The job of these methods is to contruct a dictionary
 
 Views are constructed from the intersection of the desired fields in the
 """
+import logging
 
 from permits import methods as permit
 from badges.resource_configs import deverbose
@@ -10,6 +11,8 @@ from importlib import import_module
 from view_configs.mods import filter_permissions_for
 
 from helpers import memoized
+
+logger = logging.getLogger(__name__)
 
 VIEW_TRAVERSE_DEPTH = 2
 
@@ -84,7 +87,7 @@ def sorted_fields_of(filtered_config):
                     available.append('POST')
                 if v & 4:
                     available.append('GET')
-                result['traversals'].append({'url': k, 'methods': available})
+                result['traversals'].append({'url': k, 'methods': available, 'resource': k})
             else:
                 if v & 4:
                     result['fields']['read'].append(k)
@@ -179,16 +182,15 @@ def delete_instance(resource=None, resource_id=None):
 
 def can_traverse(d):
     """ Pass in a shallow dictionary of fields, along with their permission codes.
-    Returns which ones the users can traverse and GET. This is to control the
-    nested retrieval of resources.
+    Returns which ones the users can traverse. This is to control the
+    nested retrieval of resources. It doesn't determine which ones the client
+    sees as available. It's possible to recurse through resources via a collection
+    the user cannot GET directly
 
-    There may be a hair of controversy here. Would we want to recurse through
-    traversals that the user cannot GET? At first draft, the answer is no.
-
-    >>> print can_traverse({'foo':7,'bar':0})
-    ['foo']
+    >>> print can_traverse({'foo':7,'bar':0,'baz':1})
+    ['foo','baz']
     """
-    return [k for k, v in d.iteritems() if v & 1 and v & 4]
+    return [k for k, v in d.iteritems() if v & 1]
 
 
 def get_instance(parent=None, parent_id=None,
@@ -230,16 +232,17 @@ def get_instance(parent=None, parent_id=None,
 
         # Even an empty set will return this:
         result = {'meta': {}, 'fields': {}, 'traversals': []}
-        result['meta'] = {'url': instance.url,
+        parent_url = parent and (parent is not 'index') and '/%s/%s' % (parent, parent_id) or ''
+        result['meta'] = {'url': '%s%s' % (parent_url, instance.url),
                           'methods': allowed,
                           'tagged_with': [resource],
                           'resource': resource}
         # And now, the "I'd like to thank my parents" clause.
         # There are two reasons why we might stuff a link to the parent in this dictionary.
         # One is that this is exactly the resource asked for in the user's
-        # request.
+        # request. The other is that the instance's parent is not the parent sent to this function.
         if instance.parent:
-            if (not depth) or (instance.parent._meta.verbose_name_plural is not parent):
+            if (not depth) or (instance.parent._meta.verbose_name_plural != parent):
                 result['meta']['parent'] = {'resource': instance.parent._meta.verbose_name_plural,
                                          'title': str(instance.parent), 'url': instance.parent.url
                                          }
@@ -257,8 +260,8 @@ def get_instance(parent=None, parent_id=None,
             # 'preload' on this traversal.
             if VIEW_TRAVERSE_DEPTH - depth:
                 if t['url'] in can_traverse(new_config['fields']):
-                    traversal[
-                        'preload'] = get_collection(parent=resource, parent_id=instance.pk,
+                    result[
+                        t['resource']] = get_collection(parent=resource, parent_id=instance.pk,
                                                     resource=t['url'],
                                                     user=user, user_role=user_role,
                                                     config=config, depth=depth + 1)
@@ -327,7 +330,8 @@ def get_collection(parent=None, parent_id=None, resource=None,
         # now we have to send along a list of ready instances or we're going to clobber the database.
         # We're going to build a Q object so our queryset gets only the ones we're looking for.
         # For now
-        result[resource] = [get_instance(resource=resource, instance=inst,
+        result['objects'] = [get_instance(resource=resource, instance=inst,
+                                         parent=parent, parent_id=parent_id,
                                          user=user, user_role=user_role, config=config,
                                          depth=depth + 1)
                             for inst in collection.all()]

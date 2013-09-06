@@ -1,7 +1,7 @@
-import json
+from pprint import pformat
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.http import Http404, HttpResponse
 from django.template import RequestContext
 from django.shortcuts import render
 
@@ -9,7 +9,7 @@ from permits.configs.modifiers import base_config
 from permits import methods as permit
 import methods
 
-def handler(request, parent=None, parent_id=None, resource=None, resource_id=None):
+def handler(request, parent=None, parent_id=None, resource=None, resource_id=None, verb=None):
     """Our job is to thoroughly screen the request so we can hand it to our methods freely.
     This way the methods can recurse without wasting clock cycles and database hits doing these checks.
     """
@@ -32,7 +32,7 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
 
     # Our easiest check:
     if not resource in permissions:
-        return 'No such resource exists: %s' % resource
+        raise Http404
     
     # urls such as "/foo" get rewritten to "index/1/foo"
     if not parent and not(resource=='index'):
@@ -44,13 +44,13 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
         parent_id=1
 
     if not parent in permissions:
-        return "Missing resource: %s" % parent
+        raise Http404
     
     # The parent scope must allow us to traverse to the resource.
     # First we must see if the parent's config even includes the resource.
     parent_p = permissions[parent]['fields'].get(resource)
     if not parent_p:
-        return "There's no link from %s to %s." % (parent, resource)
+        raise Http404
 
     # Alright, now a database query to see if the parent_resource exists.
     if parent is not "index":
@@ -58,7 +58,7 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
             parent_model = methods.model_for(parent)
             parent_instance = parent_model.objects.get(pk=parent_id)
         except ObjectDoesNotExist:
-            return "%s/%s does not exist." % (parent,parent_id)
+            raise Http404
     else:
         parent_instance=False
 
@@ -78,7 +78,7 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
 
     # The execute bit need to be on.
     if not permit.permissions_digit_for(user_role, parent_p)&1:
-        return 'Not legal to traverse from %s to a %s' % (parent, resource)
+        raise PermissionDenied
     
     # A stub.
     this_method = request.method or 'GET'
@@ -89,7 +89,7 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
     else:
         allowed = permit.scope_allows_collection(resource,user_role,permissions[parent])
     if not this_method in allowed:
-        return "The method %s is not allowed." % this_method
+        raise PermissionDenied
 
     # Last possibility: the resource does not exist. Check for that.
     if resource_id:
@@ -106,7 +106,7 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
             if request.method == 'DELETE':
                 pass
         except ObjectDoesNotExist:
-            return 'no such object as %s/%s' % (resource, resource_id)
+            raise Http404
     else:
         if request.method == 'GET':
             context = methods.get_collection(parent=parent, parent_id=parent_id, resource=resource,
@@ -115,6 +115,9 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
             template = '%s_in_%s.html' % (resource,parent) 
         if request.method == 'POST':
             pass
-    # data = json.dumps(context, sort_keys=True, indent=4)
-    # c = RequestContext(request, context)
-    return HttpResponse(render(request, template, context))
+    dict_flag = request.GET.get('dict')
+    if dict_flag:
+        c = RequestContext(request, context)
+        return HttpResponse(pformat(c, indent=4), mimetype="text/plain")
+    else:
+        return HttpResponse(render(request, template, context), mimetype='text/html')

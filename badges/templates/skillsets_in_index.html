@@ -1,17 +1,15 @@
 {% extends "content.html" %}
 
 {% block mainpage %}
-
-    <div class="row-fluid">
-    {% for skillset in skillsets %}
-        <div class="span4">
-        {% include 'fragments/skillset_listing.html' %}
-        {% if forloop.last %}
+    {% load partitions %}
+    {% for row in objects|columns:3 %}
+    <div class="row-fluid span12">
+        {% for skillset in row %}
+            <div class="span4">
+                {% include 'fragments/skillset_listing.html' %}
             </div>
-        {% else %}
-            {% if forloop.counter|divisibleby:3 %}
-                </div><div class="row">
-            {% endif %}
-        {% endif %}
+        {% endfor %}
+    </div>
     {% endfor %}
+
 {% endblock %}

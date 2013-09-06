@@ -21,4 +21,16 @@ DATABASES = {
 }
 
 INSTALLED_APPS += ('build',
-    'discover_runner')
+    'discover_runner',
+    'debug_toolbar')
+
+MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
+
+INTERNAL_IPS = ('0.0.0.0','10.0.2.2')
+
+def custom_show_toolbar(self):
+    return True
+
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': custom_show_toolbar,
+}
