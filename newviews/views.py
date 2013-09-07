@@ -86,10 +86,10 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
         try:
             inst = manager.get(pk=resource_id)
             if request.method == 'GET':
-                # We may be getting a request for a form.
-                # Later include checking to see if the user has editing rights.
                 opts['instance'] = inst
-                if request.QueryDict.get('form') == 'edit':
+                # We may be getting a request for a form, for PUTting or DELETEing.
+                # If the user couldn't do this method anyway we just ignore the QueryDict.
+                if request.QueryDict.get('form') == 'edit' and 'PUT' in allowed:
                     context = methods.get_put_form(**opts)
                 else:
                     context = methods.get_instance(**opts)
@@ -102,9 +102,12 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
             raise Http404
     else:
         if request.method == 'GET':
-            context = methods.get_collection(**opts)
-            # magic naming again.
-            template = '%s_in_%s.html' % (resource, parent)
+            if request.QueryDict.get('form') == 'create' and 'POST' in allowed:
+                context = methods.get_post_form(**opts)
+            else:
+                context = methods.get_collection(**opts)
+                # magic naming again.
+                template = '%s_in_%s.html' % (resource, parent)
         if request.method == 'POST':
             pass
     dict_flag = request.GET.get('dict')

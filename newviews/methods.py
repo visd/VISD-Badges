@@ -5,6 +5,8 @@ Views are constructed from the intersection of the desired fields in the
 """
 import logging
 
+from django.forms.models import modelform_factory
+
 from permits import methods as permit
 from badges.resource_configs import deverbose
 from importlib import import_module
@@ -87,7 +89,8 @@ def sorted_fields_of(filtered_config):
                     available.append('POST')
                 if v & 4:
                     available.append('GET')
-                result['traversals'].append({'url': k, 'methods': available, 'resource': k})
+                result['traversals'].append(
+                    {'url': k, 'methods': available, 'resource': k})
             else:
                 if v & 4:
                     result['fields']['read'].append(k)
@@ -180,6 +183,12 @@ def delete_instance(resource=None, resource_id=None):
     """
 
 
+def manager_from(parent, parent_id, resource):
+    """ A convenience; returns the parent's related manager for this resource.
+    """
+    return getattr(model_for(parent).objects.get(pk=parent_id), resource)
+
+
 def can_traverse(d):
     """ Pass in a shallow dictionary of fields, along with their permission codes.
     Returns which ones the users can traverse. This is to control the
@@ -240,10 +249,12 @@ def get_instance(parent=None, parent_id=None,
         # And now, the "I'd like to thank my parents" clause.
         # There are two reasons why we might stuff a link to the parent in this dictionary.
         # One is that this is exactly the resource asked for in the user's
-        # request. The other is that the instance's parent is not the parent sent to this function.
+        # request. The other is that the instance's parent is not the parent
+        # sent to this function.
         if instance.parent:
             if (not depth) or (instance.parent._meta.verbose_name_plural != parent):
-                result['meta']['parent'] = {'resource': instance.parent._meta.verbose_name_plural,
+                result[
+                    'meta']['parent'] = {'resource': instance.parent._meta.verbose_name_plural,
                                          'title': str(instance.parent), 'url': instance.parent.url
                                          }
 
@@ -262,9 +273,9 @@ def get_instance(parent=None, parent_id=None,
                 if t['url'] in can_traverse(new_config['fields']):
                     result[
                         t['resource']] = get_collection(parent=resource, parent_id=instance.pk,
-                                                    resource=t['url'],
-                                                    user=user, user_role=user_role,
-                                                    config=config, depth=depth + 1)
+                                                        resource=t['url'],
+                                                        user=user, user_role=user_role,
+                                                        config=config, depth=depth + 1)
             result['traversals'].append(traversal)
         # If depth is 0, we've already gotten this instance and don't need
         # another link back.
@@ -276,8 +287,9 @@ def get_instance(parent=None, parent_id=None,
 
 
 def post_to_collection(parent=None, parent_id=None, resource=None,
-                       user=None, config=None):
+                       user=None, config=None, request=None):
     pass
+
 
 def get_put_form(parent=None, parent_id=None,
                  resource=None, instance=None,
@@ -289,7 +301,41 @@ def get_put_form(parent=None, parent_id=None,
     sort than the instance's natural parent, and if so would (depending on permissions)
     prefill this adopted parent in the form.
     """
-    
+    pass
+
+
+def get_post_form(parent=None, parent_id=None,
+                  resource=None, instance=None,
+                  user=None, user_role=None, config=None,
+                  depth=0):
+    """ Returns a dictionary with:
+        a form for posting one of this resource, and
+        a target url/method for the form.
+
+        We're already checked, and the user is allowed to post one of these.
+    """
+    # This one is simple: The user is going to be the owner of this resource.
+    this_config = permit.reduce_permissions_dictionary_to('owner', config)
+    this_model = model_for(resource)
+
+    formfields = sorted_fields_of(this_config[resource]['fields'])['fields']
+    # We only want a form for the fields the owner can read and write.
+    userfields = tuple(set(formfields['read']) & set(formfields['write']))
+
+    # We'll need the manager to tell us the url.
+    manager = parent and manager_from(parent, parent_id, resource)\
+        or\
+        this_model.collection
+
+    # Now we create the form.
+    form_class = modelform_factory(this_model, fields=userfields)
+    result = {'form': form_class()}
+    result['target'] = {'url': '%s%s' %
+                        (parent and '/%s/%s' % (parent, parent_id) or '',
+                         manager.url()),
+                        'method': 'POST'
+                        }
+    return result
 
 def get_collection(parent=None, parent_id=None, resource=None,
                    user=None, user_role=None, config=None,
@@ -314,16 +360,15 @@ def get_collection(parent=None, parent_id=None, resource=None,
         allowed.remove('GET')
 
     this_model = model_for(resource)
-    # We get to use the model's manager directly if it's the root, or we
-    # are at a scope such as /foo/:id/bar/:id, which will return a url of
-    # /bar/:id
+    # We get to use the model's manager directly if it's the root, or if there is a parent
+    # we use the parent's manager.
     if parent:
         # And now a bit of magic naming. We expect the verbose name of the resource
         # to be an attribute of the parent model.
         parent_model = model_for(parent)
         parent_inst = parent_model.objects.get(pk=parent_id)
         collection = getattr(parent_inst, resource)
-    else:        
+    else:
         collection = this_model.collection
 
     # The following count will only be accurate when we filter collections by
@@ -342,10 +387,10 @@ def get_collection(parent=None, parent_id=None, resource=None,
         # We're going to build a Q object so our queryset gets only the ones we're looking for.
         # For now
         result['objects'] = [get_instance(resource=resource, instance=inst,
-                                         parent=parent, parent_id=parent_id,
-                                         user=user, user_role=user_role, config=config,
-                                         depth=depth + 1)
-                            for inst in collection.all()]
+                                          parent=parent, parent_id=parent_id,
+                                          user=user, user_role=user_role, config=config,
+                                          depth=depth + 1)
+                             for inst in collection.all()]
     return result
 
 if __name__ == '__main__':

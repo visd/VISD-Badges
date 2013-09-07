@@ -106,3 +106,9 @@ class ViewMethodTestCases(TestCase):
         pp.pprint(methods.get_instance(resource='challenges', instance=self.instance,
                                        user=None, user_role='group',
                                        config=self.challenge_config, depth=0))
+
+    def test_get_post_form(self):
+        print '\n'
+        print 'Getting a post form'
+        self.form_dict = methods.get_post_form(resource='challenges', config=self.challenge_config)
+        pp.pprint(self.form_dict['form'].as_p())
