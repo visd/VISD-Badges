@@ -232,7 +232,7 @@ def get_instance(parent=None, parent_id=None,
 
         # Even an empty set will return this:
         result = {'meta': {}, 'fields': {}, 'traversals': []}
-        parent_url = parent and (parent is not 'index') and '/%s/%s' % (parent, parent_id) or ''
+        parent_url = parent and '/%s/%s' % (parent, parent_id) or ''
         result['meta'] = {'url': '%s%s' % (parent_url, instance.url),
                           'methods': allowed,
                           'tagged_with': [resource],
@@ -279,6 +279,17 @@ def post_to_collection(parent=None, parent_id=None, resource=None,
                        user=None, config=None):
     pass
 
+def get_put_form(parent=None, parent_id=None,
+                 resource=None, instance=None,
+                 user=None, user_role=None, config=None,
+                 depth=0):
+    """ Returns a dictionary with a form to PUT this resource. 
+    Also includes read-only fields in the dictionary (not in the form).
+    Extra-deluxe functionality would determine if the parent was of a different
+    sort than the instance's natural parent, and if so would (depending on permissions)
+    prefill this adopted parent in the form.
+    """
+    
 
 def get_collection(parent=None, parent_id=None, resource=None,
                    user=None, user_role=None, config=None,
@@ -306,14 +317,14 @@ def get_collection(parent=None, parent_id=None, resource=None,
     # We get to use the model's manager directly if it's the root, or we
     # are at a scope such as /foo/:id/bar/:id, which will return a url of
     # /bar/:id
-    if parent == 'index':
-        collection = this_model.collection
-    else:
+    if parent:
         # And now a bit of magic naming. We expect the verbose name of the resource
         # to be an attribute of the parent model.
         parent_model = model_for(parent)
         parent_inst = parent_model.objects.get(pk=parent_id)
         collection = getattr(parent_inst, resource)
+    else:        
+        collection = this_model.collection
 
     # The following count will only be accurate when we filter collections by
     # owner/group.`
@@ -324,7 +335,7 @@ def get_collection(parent=None, parent_id=None, resource=None,
         'count': collection.count()
     }
     }
-    if not parent == 'index' and not depth:
+    if parent and not depth:
         result['traversals'] = [{'url': parent_inst.url, 'method': 'GET'}]
     if VIEW_TRAVERSE_DEPTH - depth:
         # now we have to send along a list of ready instances or we're going to clobber the database.
