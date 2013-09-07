@@ -72,7 +72,7 @@ BASE_PERMISSIONS = {
             'url_link': '0644',
             'url_title': '0644',
             'created_at': '0444',
-            'challenge': '0600'
+            'challenge': '0400'
         },
         'methods': {
             'PUT': '0700',

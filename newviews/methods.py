@@ -352,8 +352,7 @@ def get_collection(parent=None, parent_id=None, resource=None,
         All the legal checks are in the handler. Once we recurse we assume
         our configuration is only throwing valid responses.
     """
-    allowed = permit.scope_allows_collection(
-        resource, user_role, config[parent])
+    allowed = permit.scope_allows_collection(resource, user_role, config[parent or 'index'])
     if not depth:
         # Since we're already GETting this, no need to offer it to the client
         # again.

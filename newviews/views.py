@@ -67,7 +67,7 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
     if resource_id:
         allowed = permit.scope_allows_instance(user_role, permissions[resource])
     else:
-        allowed = permit.scope_allows_collection(resource, user_role, permissions[parent])
+        allowed = permit.scope_allows_collection(resource, user_role, permissions[parent or 'index'])
     if not this_method in allowed:
         raise PermissionDenied
 
@@ -87,10 +87,13 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
             inst = manager.get(pk=resource_id)
             if request.method == 'GET':
                 opts['instance'] = inst
+                requested_form = request.GET.get('form')
                 # We may be getting a request for a form, for PUTting or DELETEing.
                 # If the user couldn't do this method anyway we just ignore the QueryDict.
-                if request.QueryDict.get('form') == 'edit' and 'PUT' in allowed:
+                if requested_form == 'edit' and 'PUT' in allowed:
                     context = methods.get_put_form(**opts)
+                if requested_form == 'delete' and 'DELETE' in allowed:
+                    pass
                 else:
                     context = methods.get_instance(**opts)
             template = '%s_detail.html' % resource
@@ -102,17 +105,13 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
             raise Http404
     else:
         if request.method == 'GET':
-            if request.QueryDict.get('form') == 'create' and 'POST' in allowed:
+            if request.GET.get('form') == 'create':
                 context = methods.get_post_form(**opts)
+                template = 'post_form.html'
             else:
                 context = methods.get_collection(**opts)
                 # magic naming again.
-                template = '%s_in_%s.html' % (resource, parent)
+                template = '%s_in_%s.html' % (resource, parent or 'index')
         if request.method == 'POST':
             pass
-    dict_flag = request.GET.get('dict')
-    if dict_flag:
-        c = RequestContext(request, context)
-        return HttpResponse(pformat(c, indent=4), mimetype="text/plain")
-    else:
-        return HttpResponse(render(request, template, context), mimetype='text/html')
+    return HttpResponse(render(request, template, context), mimetype='text/html')

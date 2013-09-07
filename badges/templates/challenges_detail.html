@@ -19,7 +19,7 @@
           <div class="text-right">
             <a href="www.example.com" class="btn btn-info">Send help</a>&nbsp;
             {% if 'POST' in entries.meta.methods %}
-            <a href="www.example.com" class="btn btn-primary">I did this!</a>
+            <a href="{{ entries.meta.url }}?form=create" class="btn btn-primary">I did this!</a>
             {% endif %}
           </div> 
       </div>
