@@ -25,8 +25,8 @@ just the count).
     - By the time fields reach the template, they can be nested for calls to the parent. So, for instance, an entry can have:
         `{'challenge':{'title':'blah', 'url':'/challenge/13', 'skillset':{'title':'blah', 'url':'/skillsets/56'}}}`
     Here we have our one case in which we count on the templating engine to figure out what to do with a url. But this is acceptable, in this case, because we know it will only ever be a GET, and by definition it is permissible.
--  resource: (*Notice the missing quote marks!*)
-    - See the result under "collection."
+-  'relations':
+    - A dictionary containing, in turn a dictionary for every related resource. This will have, at bare minimum, a 'meta' entry with a url and available methods for that URL. If there's more nesting to do, the collection for that relation is nested in here (see below).
 
 #### Collection:
     

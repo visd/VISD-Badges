@@ -124,7 +124,6 @@ def viewmap_of(resource_config):
     and limited to one resource. It uses the routines above to build a
     dehydrated dictionary.
 
-    
     This method feels inefficient as written. Improvements welcome. Note, however,
     that it does need to return a dictionary with fields, traversals and methods
     even if they're all empty.
@@ -216,7 +215,8 @@ def get_instance(parent=None, parent_id=None,
         Accepts, among many other parameters, an instance of the given resource type.
 
         Some day, when we're not relying on Django model/instance methods, we can pass
-        dictionaries around instead of instances and be many times more efficient with the database.
+        dictionaries around instead of instances and be many times more efficient 
+        with the database.
         Someday.
     """
 
@@ -240,7 +240,7 @@ def get_instance(parent=None, parent_id=None,
             user_role, narrow_config)
 
         # Even an empty set will return this:
-        result = {'meta': {}, 'fields': {}, 'traversals': []}
+        result = {'meta': {}, 'fields': {}, 'relations': {}}
         parent_url = parent and '/%s/%s' % (parent, parent_id) or ''
         result['meta'] = {'url': '%s%s' % (parent_url, instance.url),
                           'methods': allowed,
@@ -265,24 +265,19 @@ def get_instance(parent=None, parent_id=None,
         # Now we add the traversables and, if we have more to go, fire off a
         # call for each one:
         for t in viewmap['traversals']:
-            traversal = {
-                'url': getattr(instance, t['url']).url(), 'methods': t['methods']}
             # If we still have a ways to go, stuff the next layer into
             # 'preload' on this traversal.
             if VIEW_TRAVERSE_DEPTH - depth:
                 if t['url'] in can_traverse(new_config['fields']):
-                    result[
-                        t['resource']] = get_collection(parent=resource, parent_id=instance.pk,
-                                                        resource=t['url'],
-                                                        user=user, user_role=user_role,
-                                                        config=config, depth=depth + 1)
-            result['traversals'].append(traversal)
-        # If depth is 0, we've already gotten this instance and don't need
-        # another link back.
-        if depth:
-            result['traversals'].append(
-                {'url': '/%s' % resource, 'method': 'GET'})
-
+                    relation = get_collection(parent=resource, parent_id=instance.pk,
+                                              resource=t['url'],
+                                              user=user, user_role=user_role,
+                                              config=config, depth=depth + 1)
+            else:
+                relation = {'meta':
+                            {'url': getattr(instance, t['url']).url(), 'methods': t['methods']}
+                            }
+            result['relations'][t.get('resource')] = relation
         return result
 
 
@@ -382,9 +377,7 @@ def get_collection(parent=None, parent_id=None, resource=None,
     if parent and not depth:
         result['traversals'] = [{'url': parent_inst.url, 'method': 'GET'}]
     if VIEW_TRAVERSE_DEPTH - depth:
-        # now we have to send along a list of ready instances or we're going to clobber the database.
-        # We're going to build a Q object so our queryset gets only the ones we're looking for.
-        # For now
+        # If there's any database clobbering going on, this might be the place.
         result['objects'] = [get_instance(resource=resource, instance=inst,
                                           parent=parent, parent_id=parent_id,
                                           user=user, user_role=user_role, config=config,

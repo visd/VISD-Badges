@@ -1,0 +1,18 @@
+<div class="thumbnail {{ entry.fields.user }}">
+    {% with meta=entry.meta %}
+        {% if meta.parent %}
+            <a href="{{ meta.parent.url}}">{{ meta.parent.title }}</a>
+        {% endif %}
+        {% include 'fragments/editbar.html' %}
+    {% endwith %}
+      {% if entry.fields.user %}
+            <p>Submitted by <a href="{{ entry.fields.user.url }}">{{ entry.fields.user.fullname }}</a></p>
+      {% endif %}
+      <img data-src="holder.js/300x200">
+      <a href="{{ entry.meta.url }}"><h4>{{entry.fields.title}}</h4></a>
+      <p>{{entry.fields.caption}}
+      {% if entry.fields.url_link %}
+            <a href="{{ entry.fields.url_link }}"> [ learn more ]</a>
+      {% endif %}
+      </p>
+</div>

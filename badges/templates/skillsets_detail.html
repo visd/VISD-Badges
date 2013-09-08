@@ -4,12 +4,12 @@
 <div id="mainpanel" class="container-fluid">
   <div id="skillset" class="row-fluid">
     {% include 'fragments/editbar.html' %}
-    <h2 class='page-header'>{{ fields.title }}</h2>
+    <h2 class='page-header'>{{ fields.title | title }}</h2>
     <p class="lead">{{ fields.long_description }}</p>
 
     <div id="challenges" class='span11 offset1'>
-        <a href="{{ t.preload.meta.url }}"><h3>{{ challenges.meta.count }} challenges in this skillset:</h3></a>
-          {% for challenge in challenges.objects %}
+        <h3>{{ relations.challenges.meta.count }} challenges in this skillset:</h3>
+          {% for challenge in relations.challenges.objects %}
               {% include 'fragments/challenge_listing.html' %}
           {% endfor %}
     </div>

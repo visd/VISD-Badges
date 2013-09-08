@@ -18,7 +18,7 @@
           <p class="lead">{{ fields.long_description }}</p>
           <div class="text-right">
             <a href="www.example.com" class="btn btn-info">Send help</a>&nbsp;
-            {% if 'POST' in entries.meta.methods %}
+            {% if 'POST' in relations.entries.meta.methods %}
             <a href="{{ entries.meta.url }}?form=create" class="btn btn-primary">I did this!</a>
             {% endif %}
           </div> 
@@ -31,18 +31,18 @@
     <div class="span3 sidebar">
       <h4>Learn more</h4>
     
-      {% if resources %}
-        {% for resource in resources.objects %}
+      {% if relations.resources %}
+        {% for resource in relations.resources.objects %}
          <p>
            <a href="{{resource.fields.url_link}}" title="{{resource.fields.description}}">{{resource.fields.title}}</a>
          </p>
         {% endfor %}
       {% endif %}
 
-      {% if tools %}
+      {% if relations.tools %}
       <h4>Tools</h4>
        <p>
-        {% for tool in tools.objects %}
+        {% for tool in relations.tools.objects %}
           {% if 'GET' in tool.meta.methods %}
             <a href="{{tool.meta.url}}">{{tool.fields.title}}</a></br>
           {% else %}
@@ -56,24 +56,9 @@
     <div class="span9">       
       <h3>Entries</h3>
        <ul class="thumbnails">
-      {% for entry in entries.objects %}
+      {% for entry in relations.entries.objects %}
           <li class="span6">
-          <div class="thumbnail
-          {% if entry.user %}
-           {{ entry.user }}
-          {% endif %}
-          ">
-            {% if entry.fields.user %}
-            <p>Submitted by <a href="{{entry.fields.user.url}}">{{entry.fields.user.fullname}}</a></p>
-            {% endif %}
-            <img data-src="holder.js/300x200">
-            <h4>{{entry.fields.title}}</h4>
-            <p>{{entry.fields.caption}}
-            {% if entry.fields.url_link %}
-            <a href="{{ entry.fields.url_link }}"> [ learn more ]</a>
-            {% endif %}
-            </p>
-          </div>
+            {% include 'fragments/entry_listing.html' %}
           </li>
       {% endfor %}
       </ul>
