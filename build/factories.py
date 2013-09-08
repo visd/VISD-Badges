@@ -7,7 +7,7 @@ import factory
 from fuzzers import FishFuzz, HexFuzz, SlugFuzz, FirstNameFuzz, LastNameFuzz, RandomExistingUser, RandomGroupAndChildren
 
 from badges.models import Skillset, Challenge, Tag, Tool, Resource, Entry
-from django.contrib.auth.models import User, Group
+from custom_auth.models import CustomUser, Group
 from events.models import Event
 
 from . import event_helpers
@@ -47,7 +47,7 @@ class GroupFactory(factory.django.DjangoModelFactory):
 
 
 class UserFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = User
+    FACTORY_FOR = CustomUser
 
     first_name = FirstNameFuzz()
     last_name = LastNameFuzz()

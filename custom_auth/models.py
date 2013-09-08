@@ -1,9 +1,11 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin,\
+Group, Permission
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
-# Create your models here.
+from badges.model import URLmixin
+
 
 class CustomUserManager(BaseUserManager):
     """docstring for CustomUserManager"""
@@ -42,7 +44,7 @@ class CustomUserManager(BaseUserManager):
         return self.get(**{self.model.USERNAME_FIELD: email})
 
 
-class UserProfile(AbstractBaseUser, PermissionsMixin):
+class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
     """An extended User with more fields"""
 
     USERNAME_FIELD='email'
@@ -59,6 +61,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
             help_text=_('Designates whether this user should be treated as '
                         'active. Unselect this instead of deleting accounts.'))
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
+    groups = models.ManyToManyField('NestedGroup', related_name='users')
 
     objects = CustomUserManager()
 
@@ -79,3 +82,34 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
             """
             send_mail(subject, message, from_email, [self.email])
 
+    class Meta:
+        verbose_name = _('user')
+        verbose_name_plural = _('users')
+
+
+class NestedGroupManager(models.Manager):
+    """
+    The manager for the Group model. Because the NestedGroup has parents, this manager can
+    return a tree of groups, get a group and all its children, and so on.
+    """
+    def get_by_natural_key(self, name):
+        return self.get(name=name)
+
+
+class NestedGroup(Group):
+    """
+    Look in this app's __init__.py to see how we add a 'parent' field to the built-in
+    Group. Otherwise this is a proxy model for adding
+    """
+    objects = NestedGroupManager()
+
+    class Meta:
+        proxy = True
+        verbose_name = _('group')
+        verbose_name_plural = _('groups')
+
+    def __str__(self):
+        return self.name
+
+    def natural_key(self):
+        return (self.name,)

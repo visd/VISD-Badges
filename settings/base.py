@@ -138,6 +138,7 @@ INSTALLED_APPS = (
     'auth_fix',
     'events',
     'custom',
+    'custom_auth',
     'permits',
     'newviews'
 )
@@ -174,6 +175,8 @@ LOGGING = {
 # These are settings for the permits system
 INDEX_OWNER = 'ajames@vashonsd.org'
 INDEX_GROUP = 'visd-group'
+
+AUTH_USER_MODEL = 'custom_auth.CustomUser'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),

@@ -87,7 +87,7 @@ class Entry(URLmixin, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     tags = models.ManyToManyField(Tag, related_name='entries')
     tools = models.ManyToManyField(Tool, related_name='entries')
-    challenge = models.ForeignKey('Challenge', related_name='entries')
+    challenge = models.ForeignKey(Challenge, related_name='entries')
 
     @memoized_property
     def parent(self):

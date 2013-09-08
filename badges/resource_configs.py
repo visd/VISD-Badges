@@ -51,8 +51,8 @@ RESOURCE_CONFIGS = {
         'description': 'A way to submit an example of your work. Entries show you have completed a challenge.'
     },
     'user': {
-        'app': 'auth',
-        'model': 'User',
+        'app': 'custom_auth',
+        'model': 'CustomUser',
         'factory': 'UserFactory',
         'parent': None,
         'parentfield': None,
