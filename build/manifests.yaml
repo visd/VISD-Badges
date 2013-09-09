@@ -2,8 +2,10 @@ manifests:
     - title: small
       description: A small population of instances per model.
       premake:
+      - factory: GroupFactory
+        count: 5
       - factory: UserFactory
-        count: 6  
+        count: 6
       - factory: SkillsetFactory
         count: 7
         children:
@@ -28,6 +30,8 @@ manifests:
         join_to: [Challenge, Entry]
         target_field: tools
         count: 3
+      - factory: assign_parents_to_groups
+        count: 5
 
 
     - title: medium

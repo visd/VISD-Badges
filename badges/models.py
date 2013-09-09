@@ -6,13 +6,13 @@ from django.db import models
 from .custom_managers import CollectionManager
 from model_mixins import URLmixin
 from helpers import memoized_property
-# from auth.models import UserProfile
+# from auth.models import CustomUser
 
 import django.db.models.options as options
 
 options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('schema',)
 
-# Note from AJ: to make the syncdb command work I had to comment out UserProfile --
+# Note from AJ: to make the syncdb command work I had to comment out CustomUser --
 # I believe it's deprecated in 1.5?
 
 # class Index(models.Model):
@@ -78,7 +78,7 @@ class Tool(URLmixin, models.Model):
 
 class Entry(URLmixin, models.Model):
     id = models.AutoField(db_index=True, primary_key=True)
-    user = models.ForeignKey(User)
+    # user = models.ForeignKey(User)
     title = models.CharField(max_length=30)
     caption = models.CharField(max_length=140)
     image = models.ImageField(upload_to='photos/%Y/%m/%d/')

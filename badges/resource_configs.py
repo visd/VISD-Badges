@@ -51,16 +51,16 @@ RESOURCE_CONFIGS = {
         'description': 'A way to submit an example of your work. Entries show you have completed a challenge.'
     },
     'user': {
-        'app': 'auth',
-        'model': 'User',
+        'app': 'custom_auth',
+        'model': 'CustomUser',
         'factory': 'UserFactory',
         'parent': None,
         'parentfield': None,
         'description': 'A user in the system. You must be logged in to show up as a user.'
     },
     'group': {
-        'app': 'auth',
-        'model': 'Group',
+        'app': 'custom_auth',
+        'model': 'NestedGroup',
         'factory': 'GroupFactory',
         'parent': None,
         'parentfield': None,
