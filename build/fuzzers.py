@@ -5,7 +5,8 @@ import names
 
 from factory import fuzzy
 
-from django.contrib.auth.models import User, Group
+# from django.contrib.auth.models import User, Group
+from custom_auth.models import CustomUser, NestedGroup
 
 
 class FishFuzz(fuzzy.BaseFuzzyAttribute):
@@ -61,13 +62,20 @@ class LastNameFuzz(fuzzy.BaseFuzzyAttribute):
 class RandomExistingUser(fuzzy.BaseFuzzyAttribute):
 
     def fuzz(self):
-        return User.objects.order_by('?')[0]
+        return CustomUser.objects.order_by('?')[0]
+
+
+class RandomExistingGroup(fuzzy.BaseFuzzyAttribute):
+
+    def fuzz(self):
+        return NestedGroup.objects.order_by('?')[0]
+
 
 class RandomGroupAndChildren(fuzzy.BaseFuzzyAttribute):
 
     def fuzz(self):
         from permits.methods import get_child_groups
-        group = Group.objects.order_by('?')[0]
+        group = NestedGroup.objects.order_by('?')[0]
         allgroups = get_child_groups(group.name)
         allgroups.append(group.name)
         return allgroups

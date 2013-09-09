@@ -59,8 +59,8 @@ RESOURCE_CONFIGS = {
         'description': 'A user in the system. You must be logged in to show up as a user.'
     },
     'group': {
-        'app': 'auth',
-        'model': 'Group',
+        'app': 'custom_auth',
+        'model': 'NestedGroup',
         'factory': 'GroupFactory',
         'parent': None,
         'parentfield': None,

@@ -4,7 +4,7 @@ Group, Permission
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
-from badges.model import URLmixin
+from badges.models import URLmixin
 
 
 class CustomUserManager(BaseUserManager):
@@ -61,7 +61,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
             help_text=_('Designates whether this user should be treated as '
                         'active. Unselect this instead of deleting accounts.'))
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
-    groups = models.ManyToManyField('NestedGroup', related_name='users')
+    memberships = models.ManyToManyField('NestedGroup', related_name='users')
 
     objects = CustomUserManager()
 
@@ -92,9 +92,46 @@ class NestedGroupManager(models.Manager):
     The manager for the Group model. Because the NestedGroup has parents, this manager can
     return a tree of groups, get a group and all its children, and so on.
     """
-    def get_by_natural_key(self, name):
+    family_tree = {}
+
+    def get_by_name(self, name):
         return self.get(name=name)
 
+    def get_group_and_children(self, pk):
+        pass
+
+    def access_as(self, user_group, obj_group):
+        """ Can a user of user_group access an object of obj_group?
+            True of False.
+        """
+        return obj_group in self.all_children_of(user_group) or user_group == obj_group
+
+    def all_children_of(self, name):
+        if not self.family_tree.get(name):
+            self.family_tree[name] = []
+            self.walk_children_of(name) 
+        return self.family_tree[name]
+
+    def top_groups(self, group_list):
+        """ Given a list of groups, returns the groups which have no parents in the list.
+            Notice that, since we may be dealing with disjoint trees, we return a tuple of top groups.
+        """
+        child_set = set([])
+        for group in group_list:
+            child_set = child_set | set(self.all_children_of(group))
+        return tuple(set(group_list)-child_set)
+
+    def walk_children_of(self, name, head=None):
+        top_group = head or name
+        g = self.get(name=name)
+        if g.children.count():
+            for child in g.children.all():
+                self.family_tree[top_group].append(child.name)
+                self.walk_children_of(child, head=top_group)
+        return
+
+    def create_group(self, name, parent):
+        pass
 
 class NestedGroup(Group):
     """

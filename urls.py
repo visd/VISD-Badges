@@ -20,5 +20,6 @@ urlpatterns = patterns('',
     # url(r'^challenges/(?P<id>\w+)$', badge_views.challenges_detail, name='challenges-detail'),
     url(r'^api/', include(router.urls)),
     url(r'^api/auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url('', include('social.apps.django_app.urls', namespace='social')),
     url(r'^', include('newviews.urls', namespace='newviews'))
 )
