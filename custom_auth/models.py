@@ -4,7 +4,7 @@ Group, Permission
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
-from badges.models import URLmixin
+from badges.model_mixins import URLmixin
 
 
 class CustomUserManager(BaseUserManager):

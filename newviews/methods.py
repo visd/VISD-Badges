@@ -265,6 +265,7 @@ def get_instance(parent=None, parent_id=None,
         # Now we add the traversables and, if we have more to go, fire off a
         # call for each one:
         for t in viewmap['traversals']:
+            
             # If we still have a ways to go, stuff the next layer into
             # 'preload' on this traversal.
             if VIEW_TRAVERSE_DEPTH - depth:

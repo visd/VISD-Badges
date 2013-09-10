@@ -14,6 +14,10 @@ BASE_PERMISSIONS = {
     },
     'skillsets': {
         'fields': {
+            'owner': '0600',
+            'owner_id': '0600',
+            'group': '0600',
+            'group_id': '0600',
             'title': '0640',
             'short_description': '0640',
             'long_description': '0640',
@@ -29,6 +33,9 @@ BASE_PERMISSIONS = {
     },
     'challenges': {
         'fields': {
+            'owner': '0600',
+            'owner_id': '0600',
+            'group': '0600',
             'title': '0640',
             'short_description': '0640',
             'long_description': '0640',
@@ -48,6 +55,8 @@ BASE_PERMISSIONS = {
     },
     'resources': {
         'fields': {
+            'owner': '0600',
+            'group': '0600',
             'title': '0644',
             'url_link': '0644',
             'url_title': '0644',
@@ -65,7 +74,8 @@ BASE_PERMISSIONS = {
     },
     'entries': {
         'fields': {
-            'user': '0444',
+            'owner': '0640',
+            'group': '0600',
             'title': '0644',
             'caption': '0644',
             'image': '0644',
