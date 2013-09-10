@@ -265,20 +265,32 @@ def get_instance(parent=None, parent_id=None,
         # Now we add the traversables and, if we have more to go, fire off a
         # call for each one:
         for t in viewmap['traversals']:
-            
-            # If we still have a ways to go, stuff the next layer into
-            # 'preload' on this traversal.
-            if VIEW_TRAVERSE_DEPTH - depth:
-                if t['url'] in can_traverse(new_config['fields']):
-                    relation = get_collection(parent=resource, parent_id=instance.pk,
-                                              resource=t['url'],
-                                              user=user, user_role=user_role,
-                                              config=config, depth=depth + 1)
-            else:
-                relation = {'meta':
-                            {'url': getattr(instance, t['url']).url(), 'methods': t['methods']}
-                            }
-            result['relations'][t.get('resource')] = relation
+            if 'GET' in t['methods']:
+                target = t['resource']
+                # If we have depth left to spend, go ahead and fetch more.
+                # Otherwise juse leave the link in place.
+                if VIEW_TRAVERSE_DEPTH - depth:
+                    target_inst = getattr(instance, target)
+                    opts = {'parent': resource,
+                            'parent_id': instance.pk,
+                            'resource': target,
+                            'user': user,
+                            'user_role': user_role,
+                            'config': config,
+                            'depth': depth + 1}
+                    # We're trying to find out if we're looking at a manager or an instance.
+                    # Wiser ways of doing this are welcome as this feels a little fluky.
+                    class_name = target_inst.__class__.__name__
+                    if class_name in ('RelatedManager','ManyRelatedManager'):
+                        relation = get_collection(**opts)
+                    else:
+                        opts['instance'] = target_inst
+                        relation = get_instance(**opts)
+                else:
+                    relation = {'meta':
+                                {'url': getattr(instance, t['url']).url(), 'methods': t['methods']}
+                                }
+                result['relations'][target] = relation
         return result
 
 

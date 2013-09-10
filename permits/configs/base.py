@@ -33,7 +33,7 @@ BASE_PERMISSIONS = {
     },
     'challenges': {
         'fields': {
-            'owner': '0600',
+            'owner': '0750',
             'owner_id': '0600',
             'group': '0600',
             'title': '0640',

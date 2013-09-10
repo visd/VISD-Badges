@@ -6,7 +6,7 @@ from newviews import methods
 
 from badges.models import Challenge
 
-from build.factories import ChallengeFactory
+from build.factories import GroupFactory, UserFactory, ChallengeFactory
 
 pp = pprint.PrettyPrinter()
 
@@ -49,7 +49,10 @@ class ViewMethodTestCases(TestCase):
                         'long_description': '0640',
                         'slug': '0400',
                         'created_at': '0000',
-                        'skillset': '0600',
+                        'skillset': '0755',
+                        'skillset_id': '0640',
+                        'owner': '0755',
+                        'owner_id': '0600',
                         'entries': '0755',
                         'resources': '0755',
                         'tags': '0755',
@@ -62,6 +65,10 @@ class ViewMethodTestCases(TestCase):
                     }
                 }
             }
+        self.group = GroupFactory.create()
+
+        self.user = UserFactory.create()
+
         self.instance = ChallengeFactory.create()
 
 

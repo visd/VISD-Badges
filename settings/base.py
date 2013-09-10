@@ -103,8 +103,8 @@ MIDDLEWARE_CLASSES = (
 
 
 TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
-    'social.apps.django_app.context_processors.backends',
-    'social.apps.django_app.context_processors.login_redirect'
+    # 'social.apps.django_app.context_processors.backends',
+    # 'social.apps.django_app.context_processors.login_redirect'
     #'events.context_processors.return_latest_events',
 )
 
@@ -138,7 +138,7 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'rest_framework',
     'django_extensions',
-    'social.apps.django_app.default',
+    # 'social.apps.django_app.default',
     'api',
     'badges',
     'auth_fix',
@@ -184,7 +184,7 @@ INDEX_GROUP = 'visd-group'
 
 AUTH_USER_MODEL = 'custom_auth.CustomUser'
 
-REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),
-    'PAGINATE_BY': 10
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),
+#     'PAGINATE_BY': 10
+# }
