@@ -14,6 +14,10 @@ BASE_PERMISSIONS = {
     },
     'skillsets': {
         'fields': {
+            'user': '0500',
+            'user_id': '0600',
+            'group': '0600',
+            'group_id': '0600',
             'title': '0640',
             'short_description': '0640',
             'long_description': '0640',
@@ -29,12 +33,15 @@ BASE_PERMISSIONS = {
     },
     'challenges': {
         'fields': {
+            'user': '0550',
+            'user_id': '0600',
+            'group': '0600',
             'title': '0640',
             'short_description': '0640',
             'long_description': '0640',
             'slug': '0400',
             'created_at': '0000',
-            'skillset': '0600',
+            'skillset': '0550',
             'entries': '0755',
             'resources': '0755',
             'tags': '0755',
@@ -48,6 +55,8 @@ BASE_PERMISSIONS = {
     },
     'resources': {
         'fields': {
+            'user': '0600',
+            'group': '0600',
             'title': '0644',
             'url_link': '0644',
             'url_title': '0644',
@@ -55,7 +64,6 @@ BASE_PERMISSIONS = {
             'challenge': '0644',
             'thumb': '0644',
             'created_at': '0400',
-            'challenge': '0600'
         },
         'methods': {
             'PUT': '0700',
@@ -65,14 +73,15 @@ BASE_PERMISSIONS = {
     },
     'entries': {
         'fields': {
-            'user': '0444',
+            'user': '0550',
+            'group': '0600',
             'title': '0644',
             'caption': '0644',
             'image': '0644',
             'url_link': '0644',
             'url_title': '0644',
             'created_at': '0444',
-            'challenge': '0400'
+            'challenge': '0550'
         },
         'methods': {
             'PUT': '0700',
@@ -81,7 +90,7 @@ BASE_PERMISSIONS = {
         }
     },
     'tags': {
-        'fields':{
+        'fields': {
             'word': '0644',
             'slug': '0000',
             'created_at': '0000',
@@ -96,7 +105,7 @@ BASE_PERMISSIONS = {
         }
     },
     'tools': {
-        'fields':{
+        'fields': {
             'title': '0644',
             'slug': '0000',
             'url_link': '0644',
@@ -122,11 +131,10 @@ BASE_PERMISSIONS = {
     },
     'users': {
         'fields': {
-            'first_name':'0640',
-            'last_name':'0640',
-            'email':'0640',
-            'username':'0440',
-            'groups':'0550',
+            'first_name': '0640',
+            'last_name': '0640',
+            'email': '0640',
+            'memberships': '0550',
             'entries': '0555'
         },
         'methods': {

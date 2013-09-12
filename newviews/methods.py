@@ -8,7 +8,7 @@ import logging
 from django.forms.models import modelform_factory
 
 from permits import methods as permit
-from badges.resource_configs import deverbose
+from badges.resource_configs import deverbose, reverbose
 from importlib import import_module
 from view_configs.mods import filter_permissions_for
 
@@ -200,6 +200,14 @@ def can_traverse(d):
     """
     return [k for k, v in d.iteritems() if v & 1]
 
+""" An optimization:
+
+From the model class, find the database fields.
+
+Delay retrieving the instance until we know what fields we'll retrieve, then
+
+(manager).only(*fields)
+"""
 
 def get_instance(parent=None, parent_id=None,
                  resource=None, instance=None,
@@ -220,21 +228,23 @@ def get_instance(parent=None, parent_id=None,
         Someday.
     """
 
-    allowed = permit.scope_allows_instance(user_role, config[resource])
+    # Now we have to weigh the user vs. the object to determine the user role
+    # For now:
+    user_role = 'group'
+
+    # We narrow the scope of the config to just this resource.
+    this_config = config[resource]
+
+    # We narrow it by filtering it against the view for the current depth.
+    narrow_config = filter_permissions_for(resource, this_config, depth)
+
+    allowed = permit.scope_allows_instance(user_role, narrow_config)
     if 'GET' in allowed:
         # If we called this directly, we want to remove a redundant 'GET'
         # from the list of methods we'll call to the user.
         if not depth:
             allowed.remove('GET')
-        # Now we have to weigh the user vs. the object to determine the user role
-        # For now:
-        user_role = 'group'
 
-        # We narrow the scope of the config to just this resource.
-        this_config = config[resource]
-
-        # We narrow it by filtering it against the view for the current depth.
-        narrow_config = filter_permissions_for(resource, this_config, depth)
 
         new_config = permit.reduce_permissions_dictionary_to(
             user_role, narrow_config)
@@ -254,8 +264,9 @@ def get_instance(parent=None, parent_id=None,
         if instance.parent:
             if (not depth) or (instance.parent._meta.verbose_name_plural != parent):
                 result[
-                    'meta']['parent'] = {'resource': instance.parent._meta.verbose_name_plural,
-                                         'title': str(instance.parent), 'url': instance.parent.url
+                    'meta']['parent'] = {'resource': unicode(instance.parent._meta.verbose_name_plural),
+                                         'title': str(instance.parent),
+                                         'url': instance.parent.url
                                          }
 
         # Now we sort the config into the kind of dictionary we are looking
@@ -264,20 +275,51 @@ def get_instance(parent=None, parent_id=None,
         result['fields'] = {f: getattr(instance, f) for f in viewmap['fields']['read']}
         # Now we add the traversables and, if we have more to go, fire off a
         # call for each one:
+        # result['traversals'] = viewmap['traversals']
+        #  ex: viewmap['traversals']==
+        #         [{'methods': ['POST', 'GET'], 'resource': 'user', 'url': 'user'}]
         for t in viewmap['traversals']:
-            # If we still have a ways to go, stuff the next layer into
-            # 'preload' on this traversal.
-            if VIEW_TRAVERSE_DEPTH - depth:
-                if t['url'] in can_traverse(new_config['fields']):
-                    relation = get_collection(parent=resource, parent_id=instance.pk,
-                                              resource=t['url'],
-                                              user=user, user_role=user_role,
-                                              config=config, depth=depth + 1)
-            else:
-                relation = {'meta':
-                            {'url': getattr(instance, t['url']).url(), 'methods': t['methods']}
-                            }
-            result['relations'][t.get('resource')] = relation
+            if 'GET' in t['methods']:
+                # target_resource == 'user'
+                target_resource = t['resource']
+                # What do we get when we access the instance field named the same as the resource?
+                target = getattr(instance, target_resource)
+                is_collection = target.__class__.__name__ in ('RelatedManager', 'ManyRelatedManager')
+                if VIEW_TRAVERSE_DEPTH - depth:
+                    opts = {'parent': resource,
+                            'parent_id': instance.pk,
+                            'resource': target_resource,
+                            'user': user,
+                            'user_role': user_role,
+                            'config': config,
+                            'depth': depth + 1}
+                    # We're trying to find out if we're looking at a manager or an instance.
+                    # Wiser ways of doing this are welcome as this feels a little fluky.
+                    if is_collection:
+                        relation = get_collection(**opts)
+                    else:
+                        opts['resource'] = reverbose(target_resource)
+                        opts['instance'] = target
+                        relation = get_instance(**opts)
+                else:
+                    # if we have no further loops to do, we'll just put a link to 
+                    # the traversal.
+                    if is_collection:
+                        relation = {'meta':
+                                    {'url': target.url(),
+                                     'title': str(instance),
+                                     'methods': t['methods'],
+                                     }
+                                    }
+                    else:
+                        relation = {'meta':
+                                     {'url': str(getattr(target, 'url')),
+                                      'title': str(target),
+                                      'methods': ['GET']
+                                     }
+                                    }
+                result['relations'][target_resource] = relation
+        result['depth left'] = VIEW_TRAVERSE_DEPTH - depth
         return result
 
 
@@ -331,6 +373,7 @@ def get_post_form(parent=None, parent_id=None,
                         'method': 'POST'
                         }
     return result
+
 
 def get_collection(parent=None, parent_id=None, resource=None,
                    user=None, user_role=None, config=None,

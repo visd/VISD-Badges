@@ -5,8 +5,10 @@
         {% endif %}
         {% include 'fragments/editbar.html' %}
     {% endwith %}
-      {% if entry.fields.user %}
-            <p>Submitted by <a href="{{ entry.fields.user.url }}">{{ entry.fields.user.fullname }}</a></p>
+      {% if entry.relations.user %}
+          <div>
+            <p>Submitted by <a href="{{ entry.relations.user.meta.url }}">{{ entry.relations.user.meta.title }}</a></p>
+          </div>
       {% endif %}
       <img data-src="holder.js/300x200">
       <a href="{{ entry.meta.url }}"><h4>{{entry.fields.title}}</h4></a>

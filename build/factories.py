@@ -39,6 +39,8 @@ def add_randomly_to_targets(target_model, target_field, list_to_add):
 class TagFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Tag
 
+    user = RandomExistingUser()
+    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
     word = SlugFuzz()
 
 
@@ -67,6 +69,8 @@ class UserFactory(factory.django.DjangoModelFactory):
 class ToolFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Tool
 
+    user = RandomExistingUser()
+    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
     title = SlugFuzz()
     url_link = "http://www.example.com"
     url_title = factory.LazyAttribute(
@@ -77,6 +81,8 @@ class ToolFactory(factory.django.DjangoModelFactory):
 class SkillsetFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Skillset
 
+    user = RandomExistingUser()
+    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
     title = FishFuzz(1, 3)
     short_description = factory.LazyAttribute(
         lambda t: "%s gets to have a short description." % t.title)
@@ -88,6 +94,8 @@ class SkillsetFactory(factory.django.DjangoModelFactory):
 class ChallengeFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Challenge
 
+    user = RandomExistingUser()
+    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
     skillset = factory.SubFactory(SkillsetFactory)
     title = factory.LazyAttributeSequence(
         lambda t, n: "Challenge #%d for %s" % (n, t.skillset))
@@ -101,6 +109,8 @@ class ChallengeFactory(factory.django.DjangoModelFactory):
 class ResourceFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Resource
 
+    user = RandomExistingUser()
+    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
     challenge = factory.SubFactory(ChallengeFactory)
     title = factory.LazyAttributeSequence(
         lambda t, n: 'Resource #%03d for %s' % (n, t.challenge))
@@ -113,7 +123,8 @@ class ResourceFactory(factory.django.DjangoModelFactory):
 class EntryFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Entry
 
-    # user = RandomExistingUser()
+    user = RandomExistingUser()
+    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
     title = factory.LazyAttributeSequence(
         lambda t, n: "Entry #%d for %s" % (n, t.challenge))
     caption = "Students used two weeks of filming time to create this sped-up view of a plant's growth."

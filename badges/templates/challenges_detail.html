@@ -4,6 +4,12 @@
 <div id="mainpanel" class="container-fluid {{skillset.slug}}">
   
   <section class="">
+    {% if relations.tags %}
+      {% with tags=relations.tags %}
+      {% include 'fragments/tagbar.html' %}
+      {% endwith %}
+    {% endif %}
+
     {% include 'fragments/editbar.html' %}  
     <div class="row-fluid">
       <div class="span2">

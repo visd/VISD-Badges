@@ -1,7 +1,9 @@
-from django.contrib.auth.models import User, Group
+from custom_auth.models import NestedGroup
 from django.template.defaultfilters import slugify
 from django.db import models
 # from django.core.urlresolvers import reverse
+
+from django.conf import settings
 
 from .custom_managers import CollectionManager
 from model_mixins import URLmixin
@@ -12,18 +14,10 @@ import django.db.models.options as options
 
 options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('schema',)
 
-# Note from AJ: to make the syncdb command work I had to comment out CustomUser --
-# I believe it's deprecated in 1.5?
-
-# class Index(models.Model):
-#     sitename = models.CharField(max_length=32)
-#     tagline = models.CharField(max_length=255)
-#     site_owner = models.ForeignKey(User, related_name='sites')
-#     site_group = models.ForeignKey(User, related_name='sites')
-
 
 class Tag(URLmixin, models.Model):
-    # owner = models.ForeignKey(User, related_name='tags')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='tags')
+    group = models.ForeignKey(NestedGroup, related_name='tags')
     word = models.CharField(max_length=35)
     slug = models.SlugField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -49,6 +43,8 @@ class Tag(URLmixin, models.Model):
 
 
 class Tool(URLmixin, models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='tools')
+    group = models.ForeignKey(NestedGroup, related_name='tools')
     title = models.CharField(db_index=True, max_length=30, unique=True)
     slug = models.SlugField()
     url_link = models.URLField(max_length=300)
@@ -77,8 +73,8 @@ class Tool(URLmixin, models.Model):
 
 
 class Entry(URLmixin, models.Model):
-    id = models.AutoField(db_index=True, primary_key=True)
-    # user = models.ForeignKey(User)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='entries')
+    group = models.ForeignKey(NestedGroup, related_name='entries')
     title = models.CharField(max_length=30)
     caption = models.CharField(max_length=140)
     image = models.ImageField(upload_to='photos/%Y/%m/%d/')
@@ -106,6 +102,9 @@ class Entry(URLmixin, models.Model):
 
 
 class Challenge(URLmixin, models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='challenges')
+    group = models.ForeignKey(NestedGroup, related_name='challenges')
+
     title = models.CharField(db_index=True, max_length=30, unique=True)
     slug = models.SlugField()
     skillset = models.ForeignKey('Skillset', related_name='challenges')
@@ -135,7 +134,9 @@ class Challenge(URLmixin, models.Model):
 
 
 class Resource(URLmixin, models.Model):
-    id = models.AutoField(db_index=True, primary_key=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='resources')
+    group = models.ForeignKey(NestedGroup, related_name='resources')
+
     title = models.CharField(max_length=30)
     url_link = models.URLField(max_length=300)
     url_title = models.CharField(max_length=140)
@@ -164,6 +165,8 @@ class Resource(URLmixin, models.Model):
 
 
 class Skillset(URLmixin, models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='skillsets')
+    group = models.ForeignKey(NestedGroup, related_name='skillsets')
     title = models.CharField(db_index=True, max_length=30, unique=True)
     slug = models.SlugField()
     short_description = models.CharField(max_length=140)

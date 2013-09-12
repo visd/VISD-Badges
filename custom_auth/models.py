@@ -4,11 +4,14 @@ Group, Permission
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
-from badges.models import URLmixin
+from badges.helpers import memoized_property
+from badges.model_mixins import URLmixin
 
 
 class CustomUserManager(BaseUserManager):
     """docstring for CustomUserManager"""
+
+    use_for_related_fields = True
 
     def _create_user(self, email, first_name, last_name, password,
                          is_staff, is_superuser, **extra_fields):
@@ -43,6 +46,12 @@ class CustomUserManager(BaseUserManager):
     def get_by_natural_key(self, email):
         return self.get(**{self.model.USERNAME_FIELD: email})
 
+    def url(self, scoped=True):
+        parent = self.__dict__.get('instance')
+        return '%s/%s' % (scoped and (parent and ('%s' % parent.url)) or "", self.model._meta.verbose_name_plural)
+
+
+
 
 class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
     """An extended User with more fields"""
@@ -63,7 +72,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
     memberships = models.ManyToManyField('NestedGroup', related_name='users')
 
-    objects = CustomUserManager()
+    collection = CustomUserManager()
+    objects = models.Manager()
+
+    @memoized_property
+    def parent(self):
+        return None
 
     def get_full_name(self):
             """
@@ -82,9 +96,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
             """
             send_mail(subject, message, from_email, [self.email])
 
+    def __unicode__(self):
+        return self.get_full_name()
+
     class Meta:
-        verbose_name = _('user')
-        verbose_name_plural = _('users')
+        verbose_name = 'user'
+        verbose_name_plural = 'users'
 
 
 class NestedGroupManager(models.Manager):
@@ -93,6 +110,8 @@ class NestedGroupManager(models.Manager):
     return a tree of groups, get a group and all its children, and so on.
     """
     family_tree = {}
+
+    use_for_related_fields = True
 
     def get_by_name(self, name):
         return self.get(name=name)
@@ -133,17 +152,27 @@ class NestedGroupManager(models.Manager):
     def create_group(self, name, parent):
         pass
 
+    def url(self, scoped=True):
+        parent = self.__dict__.get('instance')
+        return '%s/%s' % (scoped and (parent and ('%s' % parent.url)) or "", self.model._meta.verbose_name_plural)
+
+
 class NestedGroup(Group):
     """
     Look in this app's __init__.py to see how we add a 'parent' field to the built-in
     Group. Otherwise this is a proxy model for adding
     """
-    objects = NestedGroupManager()
+    collection = NestedGroupManager()
+    objects = models.Manager()
 
     class Meta:
         proxy = True
-        verbose_name = _('group')
-        verbose_name_plural = _('groups')
+        verbose_name = 'membership'
+        verbose_name_plural = 'memberships'
+
+    @memoized_property
+    def parent(self):
+        return None
 
     def __str__(self):
         return self.name

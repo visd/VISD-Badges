@@ -76,17 +76,29 @@ RESOURCE_CONFIGS = {
     }
 }
 
+# Use something like:
+# inv_map = {v:k for k, v in map.items()}
+
+RESOURCE_NAMES = [
+    ('challenges','challenge'),
+    ('skillsets','skillset'),
+    ('resources','resource'),
+    ('tags','tag'),
+    ('tools','tool'),
+    ('entries','entry'),
+    ('users','user'),
+    ('memberships','group'),
+    ('index','index'),
+    ('events','event')
+]
+
+
 @memoized
 def deverbose(verbose_name):
-    return RESOURCE_CONFIGS[{
-        'challenges':'challenge',
-        'skillsets':'skillset',
-        'resources':'resource',
-        'tags':'tag',
-        'tools':'tool',
-        'entries':'entry',
-        'users':'user',
-        'groups':'group',
-        'index':'index',
-        'events':'event'
-    }[verbose_name]]
+    return RESOURCE_CONFIGS[{k:v for k, v in RESOURCE_NAMES}[verbose_name]]
+
+
+@memoized
+def reverbose(singular_name):
+    return {v:k for k, v in RESOURCE_NAMES}[singular_name]
+
