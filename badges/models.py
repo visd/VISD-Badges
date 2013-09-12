@@ -16,7 +16,7 @@ options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('schema',)
 
 
 class Tag(URLmixin, models.Model):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='tags')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='tags')
     group = models.ForeignKey(NestedGroup, related_name='tags')
     word = models.CharField(max_length=35)
     slug = models.SlugField()
@@ -43,7 +43,7 @@ class Tag(URLmixin, models.Model):
 
 
 class Tool(URLmixin, models.Model):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='tools')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='tools')
     group = models.ForeignKey(NestedGroup, related_name='tools')
     title = models.CharField(db_index=True, max_length=30, unique=True)
     slug = models.SlugField()
@@ -73,7 +73,7 @@ class Tool(URLmixin, models.Model):
 
 
 class Entry(URLmixin, models.Model):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='entries')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='entries')
     group = models.ForeignKey(NestedGroup, related_name='entries')
     title = models.CharField(max_length=30)
     caption = models.CharField(max_length=140)
@@ -102,7 +102,7 @@ class Entry(URLmixin, models.Model):
 
 
 class Challenge(URLmixin, models.Model):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='challenges')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='challenges')
     group = models.ForeignKey(NestedGroup, related_name='challenges')
 
     title = models.CharField(db_index=True, max_length=30, unique=True)
@@ -134,7 +134,7 @@ class Challenge(URLmixin, models.Model):
 
 
 class Resource(URLmixin, models.Model):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='resources')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='resources')
     group = models.ForeignKey(NestedGroup, related_name='resources')
 
     title = models.CharField(max_length=30)
@@ -165,7 +165,7 @@ class Resource(URLmixin, models.Model):
 
 
 class Skillset(URLmixin, models.Model):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='skillsets')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='skillsets')
     group = models.ForeignKey(NestedGroup, related_name='skillsets')
     title = models.CharField(db_index=True, max_length=30, unique=True)
     slug = models.SlugField()

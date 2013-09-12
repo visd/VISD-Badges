@@ -28,7 +28,7 @@ VIEW_DEPTHS = {
         1: {
             'fields': {
                 'omit': [
-                    'long_description','slug','created_at','entries','resources','tools','skillset'
+                    'long_description', 'slug', 'created_at', 'entries', 'resources', 'tools'
                 ],
                 'extend': [
                     'resources'
@@ -83,6 +83,82 @@ VIEW_DEPTHS = {
             }
         }
     },
+    'entries': {
+        0: {},
+        1: {
+            'fields': {
+                'omit': [
+                    'caption', 'tags', 'tools'
+                ]
+            }
+        },
+        2: {
+            'fields': {
+                'omit': [
+                    'challenge', 'url_link', 'url_title', 'created_at'
+                ]
+            },
+            'methods': {
+                'omit': [
+                    'PUT', 'DELETE'
+                ]
+            }
+        }
+    },
+    'tools': {
+        0: {},
+        1: {
+            'fields': {
+                'omit': [
+                    'challenges', 'entries', 'url_link', 'url_title', 'create_at'
+                ]
+            },
+            'methods': {
+                'omit': [
+                    'PUT', 'DELETE'
+                ]
+            }
+        },
+        2: {
+            'fields': {
+                'omit': [
+                    'icon', 'slug'
+                ]
+            },
+        }
+    },
+    'resources': {
+        0: {},
+        1: {
+            'fields': {
+                'omit': [
+                    'challenge', 'created_at'
+                ]
+            },
+            'methods': {
+                'omit': [
+                    'PUT', 'DELETE'
+                ]
+            }
+        }
+    },
+    'tags': {
+        0: {},
+        1: {
+            'fields': {
+                'omit': [
+                    'user','group','created_at','challenges','entries','skillsets'
+                ]
+            }
+        },
+        2: {
+            'methods': {
+                'omit': [
+                    'PUT', 'DELETE'
+                ]
+            }
+        }
+    }
 }
 
 def compile_mod_to(mod_fragment, depth):

@@ -87,7 +87,7 @@ RESOURCE_NAMES = [
     ('tools','tool'),
     ('entries','entry'),
     ('users','user'),
-    ('groups','group'),
+    ('memberships','group'),
     ('index','index'),
     ('events','event')
 ]
@@ -95,7 +95,7 @@ RESOURCE_NAMES = [
 
 @memoized
 def deverbose(verbose_name):
-    return {k:v for k, v in RESOURCE_NAMES}[verbose_name]
+    return RESOURCE_CONFIGS[{k:v for k, v in RESOURCE_NAMES}[verbose_name]]
 
 
 @memoized
