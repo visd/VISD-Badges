@@ -6,6 +6,7 @@ Views are constructed from the intersection of the desired fields in the
 import logging
 
 from django.forms.models import modelform_factory
+from django.shortcuts import redirect
 
 from permits import methods as permit
 from badges.resource_configs import deverbose, reverbose
@@ -209,6 +210,7 @@ Delay retrieving the instance until we know what fields we'll retrieve, then
 (manager).only(*fields)
 """
 
+
 def get_instance(parent=None, parent_id=None,
                  resource=None, instance=None,
                  user=None, user_role=None, config=None,
@@ -325,7 +327,33 @@ def get_instance(parent=None, parent_id=None,
 
 def post_to_collection(parent=None, parent_id=None, resource=None,
                        user=None, config=None, request=None):
-    pass
+    # Decision: Do we want to redirect the detail view of the new resource,
+    # or to the colleciton in which it lives? I'll opt for the latter.
+
+    # We'll resolve the user's status later. For now we'll just say it's 'group',
+    # with the special config of a member of 'visd-group.'
+
+    user_role = 'group'
+
+    new_config = permit.reduce_permissions_dictionary_to(user_role, config[resource])
+
+    # We use this, and the config, to find out which fields on the model this user is
+    # permitted to create.
+    # Whatever was submitted in the request.POST gets filtered through this.
+    write_fields = sorted_fields_of(new_config['fields'])['write']
+    permitted_fields = list(set(request.POST) & set(write_fields))
+    values = {k: request.POST[k] for k in permitted_fields}
+    # Don't forget to make the user the owner and have it belong to user's group.
+    # values['user'] = user
+    # values['user'] = user.group
+    this_model = model_for(resource)
+    form = modelform_factory(this_model, fields=permitted_fields)(**values)
+    if form.is_valid():
+        new_inst = form.save()
+        return redirect('newviews:parsed-url', parent=parent, parent_id=parent_id, resource=resource)
+    else:
+        pass
+    return new_inst
 
 
 def get_put_form(parent=None, parent_id=None,
@@ -344,29 +372,32 @@ def get_put_form(parent=None, parent_id=None,
 def get_post_form(parent=None, parent_id=None,
                   resource=None, instance=None,
                   user=None, user_role=None, config=None,
-                  depth=0):
+                  depth=0, form=None):
     """ Returns a dictionary with:
         a form for posting one of this resource, and
         a target url/method for the form.
 
         We're already checked, and the user is allowed to post one of these.
     """
-    # This one is simple: The user is going to be the owner of this resource.
-    this_config = permit.reduce_permissions_dictionary_to('owner', config)
-    this_model = model_for(resource)
+    if form is None:
+        # This one is simple: The user is going to be the owner of this resource.
+        this_config = permit.reduce_permissions_dictionary_to('owner', config)
+        this_model = model_for(resource)
 
-    formfields = sorted_fields_of(this_config[resource]['fields'])['fields']
-    # We only want a form for the fields the owner can read and write.
-    userfields = tuple(set(formfields['read']) & set(formfields['write']))
+        formfields = sorted_fields_of(this_config[resource]['fields'])['fields']
+        # We only want a form for the fields the owner can read and write.
+        userfields = tuple(set(formfields['read']) & set(formfields['write']))
 
-    # We'll need the manager to tell us the url.
-    manager = parent and manager_from(parent, parent_id, resource)\
-        or\
-        this_model.collection
+        # We'll need the manager to tell us the url.
+        manager = parent and manager_from(parent, parent_id, resource)\
+            or\
+            this_model.collection
 
-    # Now we create the form.
-    form_class = modelform_factory(this_model, fields=userfields)
-    result = {'form': form_class()}
+        # Now we create the form.
+        form_class = modelform_factory(this_model, fields=userfields)
+        result = {'form': form_class()}
+    else:
+        result = {'form': form}
     result['target'] = {'url': '%s%s' %
                         (parent and '/%s/%s' % (parent, parent_id) or '',
                          manager.url()),
