@@ -16,7 +16,7 @@ def api_for(user_role, group=None):
     return {user_role: api_dict(config=config)}
 
 def meta_for(resource):
-    description = resource_configs.deverbose(resource).get('description')
+    description = resource_configs.config_from_verbose(resource).get('description')
     return {'description':description or ''}
 
 def markdown_api(user_role, group=None, filename='api'):

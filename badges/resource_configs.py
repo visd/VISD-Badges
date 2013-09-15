@@ -6,7 +6,7 @@ RESOURCE_CONFIGS = {
         'app': 'badges',
         'model': 'Challenge',
         'factory': 'ChallengeFactory',
-        'parent':'skillset',
+        'parent': 'skillset',
         'parentfield': 'skillset',
         'description': 'Challenges represent projects or ideas teachers can take on.'
     },
@@ -80,25 +80,28 @@ RESOURCE_CONFIGS = {
 # inv_map = {v:k for k, v in map.items()}
 
 RESOURCE_NAMES = [
-    ('challenges','challenge'),
-    ('skillsets','skillset'),
-    ('resources','resource'),
-    ('tags','tag'),
-    ('tools','tool'),
-    ('entries','entry'),
-    ('users','user'),
-    ('memberships','group'),
-    ('index','index'),
-    ('events','event')
+    ('challenges', 'challenge'),
+    ('skillsets', 'skillset'),
+    ('resources', 'resource'),
+    ('tags', 'tag'),
+    ('tools', 'tool'),
+    ('entries', 'entry'),
+    ('users', 'user'),
+    ('memberships', 'group'),
+    ('index', 'index'),
+    ('events', 'event')
 ]
+
+
+def config_from_verbose(verbose_name):
+    return RESOURCE_CONFIGS[deverbose(verbose_name)]
 
 
 @memoized
 def deverbose(verbose_name):
-    return RESOURCE_CONFIGS[{k:v for k, v in RESOURCE_NAMES}[verbose_name]]
+    return {k: v for k, v in RESOURCE_NAMES}[verbose_name]
 
 
 @memoized
 def reverbose(singular_name):
-    return {v:k for k, v in RESOURCE_NAMES}[singular_name]
-
+    return {v: k for k, v in RESOURCE_NAMES}[singular_name]

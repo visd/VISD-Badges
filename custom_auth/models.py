@@ -51,15 +51,12 @@ class CustomUserManager(BaseUserManager):
         return '%s/%s' % (scoped and (parent and ('%s' % parent.url)) or "", self.model._meta.verbose_name_plural)
 
 
-
-
 class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
     """An extended User with more fields"""
 
     USERNAME_FIELD='email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
-    id = models.AutoField(primary_key=True)
     email = models.EmailField(max_length=60, db_index=True, unique=True)
     first_name = models.CharField(_('first name'), max_length=30, blank=True)
     last_name = models.CharField(_('last name'), max_length=30, blank=True)
@@ -79,22 +76,32 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
     def parent(self):
         return None
 
+    @memoized_property
+    def user(self):
+        return self
+
+    @memoized_property
+    def all_groups(self):
+        manager = self.memberships
+        return [manager.all_children_of(group.name) for group in manager.all()]
+
     def get_full_name(self):
-            """
-            Returns the first_name plus the last_name, with a space in between.
-            """
-            full_name = '%s %s' % (self.first_name, self.last_name)
-            return full_name.strip()
+        """
+        Returns the first_name plus the last_name, with a space in between.
+        """
+        full_name = '%s %s' % (self.first_name, self.last_name)
+        return full_name.strip()
 
     def get_short_name(self):
-            "Returns the short name for the user."
-            return self.first_name
+        "Returns the short name for the user."
+        return self.first_name
 
     def email_user(self, subject, message, from_email=None):
-            """
-            Sends an email to this User.
-            """
-            send_mail(subject, message, from_email, [self.email])
+        """
+        Sends an email to this User.
+        """
+        pass
+        # send_mail(subject, message, from_email, [self.email])
 
     def __unicode__(self):
         return self.get_full_name()
@@ -113,11 +120,17 @@ class NestedGroupManager(models.Manager):
 
     use_for_related_fields = True
 
+    def _walk_children_of(self, this_group, head=None):
+        top_group = head or this_group
+        g = self.only('name',).get(name=this_group)
+        if g.children.count():
+            for child in g.children.all():
+                self.family_tree[top_group].append(child.this_group)
+                self._walk_children_of(child, head=top_group)
+        return
+
     def get_by_name(self, name):
         return self.get(name=name)
-
-    def get_group_and_children(self, pk):
-        pass
 
     def access_as(self, user_group, obj_group):
         """ Can a user of user_group access an object of obj_group?
@@ -127,8 +140,8 @@ class NestedGroupManager(models.Manager):
 
     def all_children_of(self, name):
         if not self.family_tree.get(name):
-            self.family_tree[name] = []
-            self.walk_children_of(name) 
+            self.family_tree[name] = ['ding']
+            self._walk_children_of(name) 
         return self.family_tree[name]
 
     def top_groups(self, group_list):
@@ -140,15 +153,6 @@ class NestedGroupManager(models.Manager):
             child_set = child_set | set(self.all_children_of(group))
         return tuple(set(group_list)-child_set)
 
-    def walk_children_of(self, name, head=None):
-        top_group = head or name
-        g = self.get(name=name)
-        if g.children.count():
-            for child in g.children.all():
-                self.family_tree[top_group].append(child.name)
-                self.walk_children_of(child, head=top_group)
-        return
-
     def create_group(self, name, parent):
         pass
 
@@ -156,11 +160,13 @@ class NestedGroupManager(models.Manager):
         parent = self.__dict__.get('instance')
         return '%s/%s' % (scoped and (parent and ('%s' % parent.url)) or "", self.model._meta.verbose_name_plural)
 
+""" The following add some fields to the built-in Group model.
+"""
+
 
 class NestedGroup(Group):
     """
-    Look in this app's __init__.py to see how we add a 'parent' field to the built-in
-    Group. Otherwise this is a proxy model for adding
+    This is a proxy model for adding a few functions.
     """
     collection = NestedGroupManager()
     objects = models.Manager()
@@ -170,12 +176,12 @@ class NestedGroup(Group):
         verbose_name = 'membership'
         verbose_name_plural = 'memberships'
 
-    @memoized_property
-    def parent(self):
-        return None
-
     def __str__(self):
         return self.name
 
     def natural_key(self):
         return (self.name,)
+
+
+field = models.ForeignKey('self', blank=True, null=True, related_name='children')
+field.contribute_to_class(Group, 'parent')

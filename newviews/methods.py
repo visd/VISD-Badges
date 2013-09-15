@@ -6,14 +6,13 @@ Views are constructed from the intersection of the desired fields in the
 import logging
 
 from django.forms.models import modelform_factory
-from django.shortcuts import redirect
+from django.core.urlresolvers import reverse
 
 from permits import methods as permit
 from badges.resource_configs import deverbose, reverbose
-from importlib import import_module
 from view_configs.mods import filter_permissions_for
 
-from helpers import memoized
+from helpers import model_for, parent_of, db_columns_of
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +46,10 @@ def access_as(user_id, user_groups, res_owner, res_group):
     else:
         return 'world'
 
+""" The next two functions use narrow slices of the permissions to generate portions
+of the target dictionaries. In other words, these are the functions that translate
+permissions in to views.
+"""
 
 def condition_view(original_dict, modifier):
     """ Takes a dictionary of permissions and omits the keys in corresponding lists
@@ -58,19 +61,6 @@ def condition_view(original_dict, modifier):
             new_dict[key] = {k: original_dict[key][k] for k in original_dict[key].keys()
                              if k not in modifier[key]['omit']}
     return new_dict
-
-
-@memoized
-def model_for(resource):
-    model_dict = deverbose(resource)
-    resource_model = '.'.join([model_dict['app'], 'models'])
-    return getattr(import_module(resource_model), model_dict['model'])
-
-
-""" The next two functions use narrow slices of the permissions to generate portions
-of the target dictionaries. In other words, these are the functions that translate
-permissions in to views.
-"""
 
 
 def sorted_fields_of(filtered_config):
@@ -176,11 +166,13 @@ def put_instance(resource=None, resource_id=None,
     """
     # get an instance from model + id.
     # new_resource = form.save(commit=False)
+    pass
 
 
 def delete_instance(resource=None, resource_id=None):
     """ You heard the nice man, delete it. Clean up after it, too.
     """
+    pass
 
 
 def manager_from(parent, parent_id, resource):
@@ -247,7 +239,6 @@ def get_instance(parent=None, parent_id=None,
         if not depth:
             allowed.remove('GET')
 
-
         new_config = permit.reduce_permissions_dictionary_to(
             user_role, narrow_config)
 
@@ -284,9 +275,11 @@ def get_instance(parent=None, parent_id=None,
             if 'GET' in t['methods']:
                 # target_resource == 'user'
                 target_resource = t['resource']
-                # What do we get when we access the instance field named the same as the resource?
+                # What do we get when we access the instance field named the
+                # same as the resource?
                 target = getattr(instance, target_resource)
-                is_collection = target.__class__.__name__ in ('RelatedManager', 'ManyRelatedManager')
+                is_collection = target.__class__.__name__ in (
+                    'RelatedManager', 'ManyRelatedManager')
                 if VIEW_TRAVERSE_DEPTH - depth:
                     opts = {'parent': resource,
                             'parent_id': instance.pk,
@@ -296,7 +289,8 @@ def get_instance(parent=None, parent_id=None,
                             'config': config,
                             'depth': depth + 1}
                     # We're trying to find out if we're looking at a manager or an instance.
-                    # Wiser ways of doing this are welcome as this feels a little fluky.
+                    # Wiser ways of doing this are welcome as this feels a
+                    # little fluky.
                     if is_collection:
                         relation = get_collection(**opts)
                     else:
@@ -304,7 +298,7 @@ def get_instance(parent=None, parent_id=None,
                         opts['instance'] = target
                         relation = get_instance(**opts)
                 else:
-                    # if we have no further loops to do, we'll just put a link to 
+                    # if we have no further loops to do, we'll just put a link to
                     # the traversal.
                     if is_collection:
                         relation = {'meta':
@@ -315,10 +309,10 @@ def get_instance(parent=None, parent_id=None,
                                     }
                     else:
                         relation = {'meta':
-                                     {'url': str(getattr(target, 'url')),
-                                      'title': str(target),
-                                      'methods': ['GET']
-                                     }
+                                   {'url': str(getattr(target, 'url')),
+                                    'title': str(target),
+                                    'methods': ['GET']
+                                    }
                                     }
                 result['relations'][target_resource] = relation
         result['depth left'] = VIEW_TRAVERSE_DEPTH - depth
@@ -335,25 +329,59 @@ def post_to_collection(parent=None, parent_id=None, resource=None,
 
     user_role = 'group'
 
-    new_config = permit.reduce_permissions_dictionary_to(user_role, config[resource])
-
+    new_config = permit.reduce_permissions_dictionary_to(
+        user_role, config[resource])
+    this_model = model_for(resource)
+    db_columns = db_columns_of(this_model)
     # We use this, and the config, to find out which fields on the model this user is
     # permitted to create.
     # Whatever was submitted in the request.POST gets filtered through this.
-    write_fields = sorted_fields_of(new_config['fields'])['write']
-    permitted_fields = list(set(request.POST) & set(write_fields))
+    write_fields = sorted_fields_of(new_config['fields'])['fields']['write']
+    permitted_fields = list(set(request.POST) &
+                            set(write_fields) &
+                            set(db_columns))
+    # And now, the permitted and user-supplied dictionary:
     values = {k: request.POST[k] for k in permitted_fields}
-    # Don't forget to make the user the owner and have it belong to user's group.
-    # values['user'] = user
-    # values['user'] = user.group
-    this_model = model_for(resource)
-    form = modelform_factory(this_model, fields=permitted_fields)(**values)
+    # Now we're going to extend the set of fields, because most models will need
+    # a user, a group and a parent.
+    extensions = []
+    
+    # Someday put this next, ugly chunk of code into a loop, and perhaps figure
+    # the values outside this method, in a config somewhere.
+
+    if 'user_id' in db_columns:
+        values['user_id'] = 1
+        extensions.append('user_id')
+    if 'group_id' in db_columns:
+        values['group_id'] = 1
+        extensions.append('group_id')
+
+    # If this new resource needs a parent, let's use the one in the URL.
+    # This is assuming we've screened for validity -- we won't get here
+    # without all our sanity checks in place.
+    if parent_of(resource):
+        values["%s_id" % parent_of(resource)] = parent_id
+        extensions.append("%s_id" % parent_of(resource))
+
+    permitted_fields.extend(extensions)
+
+    form = modelform_factory(this_model, fields=permitted_fields)(values)
+    opts = {'parent': parent,
+            'parent_id': parent_id,
+            'resource': resource,
+            'user': user,
+            'user': user_role,
+            'config': config,
+            'depth': 0}
     if form.is_valid():
-        new_inst = form.save()
-        return redirect('newviews:parsed-url', parent=parent, parent_id=parent_id, resource=resource)
+        new_inst = form.save(commit=False)
+        # Now we need to sneak in a few more values.
+
+        # Success! Now show the page this belongs on.
+        return (True, get_collection(**opts))
     else:
-        pass
-    return new_inst
+        opts['form'] = form
+        return (False, get_post_form(**opts))
 
 
 def get_put_form(parent=None, parent_id=None,
@@ -380,29 +408,28 @@ def get_post_form(parent=None, parent_id=None,
         We're already checked, and the user is allowed to post one of these.
     """
     if form is None:
-        # This one is simple: The user is going to be the owner of this resource.
+        # The user is going to be the owner of this resource.
         this_config = permit.reduce_permissions_dictionary_to('owner', config)
-        this_model = model_for(resource)
 
-        formfields = sorted_fields_of(this_config[resource]['fields'])['fields']
+        formfields = sorted_fields_of(
+            this_config[resource]['fields'])['fields']
         # We only want a form for the fields the owner can read and write.
         userfields = tuple(set(formfields['read']) & set(formfields['write']))
 
-        # We'll need the manager to tell us the url.
-        manager = parent and manager_from(parent, parent_id, resource)\
-            or\
-            this_model.collection
-
         # Now we create the form.
-        form_class = modelform_factory(this_model, fields=userfields)
-        result = {'form': form_class()}
-    else:
-        result = {'form': form}
-    result['target'] = {'url': '%s%s' %
-                        (parent and '/%s/%s' % (parent, parent_id) or '',
-                         manager.url()),
-                        'method': 'POST'
-                        }
+        this_model = model_for(resource)
+        form = modelform_factory(this_model, fields=userfields)()
+
+    result = {
+        'target': {
+            'url': reverse('newviews:parsed-url',
+                           kwargs={'parent': parent,
+                                   'parent_id': parent_id,
+                                   'resource': resource}),
+            'method': 'POST',
+            'form': form
+        }
+    }
     return result
 
 
@@ -421,7 +448,8 @@ def get_collection(parent=None, parent_id=None, resource=None,
         All the legal checks are in the handler. Once we recurse we assume
         our configuration is only throwing valid responses.
     """
-    allowed = permit.scope_allows_collection(resource, user_role, config[parent or 'index'])
+    allowed = permit.scope_allows_collection(
+        resource, user_role, config[parent or 'index'])
     if not depth:
         # Since we're already GETting this, no need to offer it to the client
         # again.

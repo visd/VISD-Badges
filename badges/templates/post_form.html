@@ -2,7 +2,7 @@
 
 {% block mainpage %}
 <form action="{{ target.url }}" method="{{ target.method }}">{% csrf_token %}
-{{ form.as_p }}
+{{ target.form.as_p }}
 <input type="submit" value="Submit" />
 </form>
 {% endblock %}

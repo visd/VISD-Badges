@@ -1,5 +1,5 @@
 MODS = {
-    'visd-staff':{
+    'visd-staff': {
         'skillsets': {
             'fields': {
                 'title': '+w',
@@ -8,7 +8,7 @@ MODS = {
                 'slug': '+rw',
                 'challenges': '+w'
             },
-            'methods':{
+            'methods': {
                 'PUT': '+rwx',
                 'DELETE': '+rx'
             }
@@ -21,10 +21,15 @@ MODS = {
                 'slug': '+w',
                 'created_at': '+r',
                 'skillset': '+rw',
+                'skillset_id': '+w',
                 'entries': '+w',
                 'resources': '+w',
                 'tags': '+w',
-                'tools': '+w'
+                'tools': '+w',
+                'user_id': '+w',
+                'user': '+w',
+                'group_id': '+w',
+                'group': '+w'
             },
             'methods': {
                 'PUT': '+rwx',
@@ -64,7 +69,7 @@ MODS = {
             }
         },
         'tags': {
-            'fields':{
+            'fields': {
                 'word': '+w',
                 'slug': '+rw',
                 'created_at': '+r'
@@ -75,7 +80,7 @@ MODS = {
             }
         },
         'tools': {
-            'fields':{
+            'fields': {
                 'title': '+w',
                 'slug': '+r',
                 'url_link': '+w',
@@ -90,16 +95,16 @@ MODS = {
         },
         'users': {
             'fields': {
-                'first_name':'+w',
-                'last_name':'+w',
-                'email':'+w',
-                'username':'+w',
-                'groups':'+w'
+                'first_name': '+w',
+                'last_name': '+w',
+                'email': '+w',
+                'username': '+w',
+                'groups': '+w'
             },
             'methods': {
                 'PUT': '+rwx',
                 'DELETE': '+rx'
             }
-        }        
+        }
     }
 }
