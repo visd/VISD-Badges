@@ -44,22 +44,11 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
 
     # Alright, now a database query to see if the parent_resource exists.
     if parent:
-        if not model_for(parent).objects.filter(pk=parent_id).exists():
+        try:
+            parent_inst = model_for(parent).objects.only('pk','user','group').get(pk=parent_id)
+        except ObjectDoesNotExist:
             raise Http404
-
-    # Now we'll work out the owner's role vs. this parent instance or the resource.
-    # E.g., is this 'owner','group', or 'world'?
-
-    # if not request.user.is_authenticated():
-        # user_role = 'world'
-    # elif parent:
-        # parent_inst = model_for(parent).objects.get(pk=parent_id)
-        # user_role = user_role_for(parent_inst, request.user)
-    # else:
-    #   user_role = 'group'
-
-    # For now:
-    user_role = 'group'
+        user_role = role_for(user, user_top_group, )
 
     # We need to check if we can traverse in this direction.
     traversals = valid_traversals(parent or 'index',
@@ -72,63 +61,42 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
 
     opts = {'resource': resource,
             'user': request.user,
-            # 'user_role': user_role,
             'config': permissions,
             'parent': parent,
             'parent_id': parent_id
             }
 
-    # If we have a resource_id, then we don't care if we can get the collection from here.
-    # But if we're looking for the collection, then we'll need to check for 'GET' or 'POST'.
-    if not resource_id:
-        allowed = traversals[resource]
-        if not request.method in allowed:
-            raise PermissionDenied
-    else:
-        # This is more complex. We have to seek out this instance, find its user/group
-        # and re-figure the user_role.
+    if resource_id:
+        # Now we have to figure out the user's role for this resource.
         manager = model_for(resource).objects
         if not manager.filter(pk=resource_id).exists():
             raise Http404
         inst = manager.get(pk=resource_id)
         user_role = role_for(user, all_user_groups, inst)
-        
 
-
-
-    # Last possibility: the resource does not exist. Check for that.
-    if resource_id:
-        # We'll use the manager of the resource's model to do the query.
-        manager = model_for(resource).objects
-        try:
-
-            if request.method == 'GET':
-                opts['instance'] = inst
-                requested_form = request.GET.get('form')
-                # We may be getting a request for a form, for PUTting or DELETEing.
-                # If the user couldn't do this method anyway we just ignore the
-                # QueryDict.
-                if requested_form == 'edit' and 'PUT' in allowed:
-                    context = methods.get_put_form(**opts)
-                    template = 'put_form.html'
-                if requested_form == 'delete' and 'DELETE' in allowed:
-                    context = methods.get_delete_form(**opts)
-                    template = 'delete_form.html'
-                else:
-                    context = methods.get_instance(**opts)
-                    template = '%s_detail.html' % resource
-            if request.method == 'PUT':
-                pass
-            if request.method == 'DELETE':
-                pass
-        except ObjectDoesNotExist:
-            raise Http404
+        if request.method == 'GET':
+            opts['instance'] = inst
+            requested_form = request.GET.get('form')
+            # We may be getting a request for a form, for PUTting or DELETEing.
+            # If the user couldn't do this method anyway we just ignore the
+            # QueryDict.
+            if requested_form == 'edit' and 'PUT' in allowed:
+                context = methods.get_put_form(**opts)
+                template = 'put_form.html'
+            if requested_form == 'delete' and 'DELETE' in allowed:
+                context = methods.get_delete_form(**opts)
+                template = 'delete_form.html'
+            else:
+                context = methods.get_instance(**opts)
+                template = '%s_detail.html' % resource
+        if request.method == 'PUT':
+            pass
+        if request.method == 'DELETE':
+            pass 
     else:
-        # We don't travel from "many" to "one." This is, no /chapters/:id/books.
-        # Or, in this case, no /entries/:id/challenges.
-        # The easiest way is to not let us traverse to the one defined on the
-        # resource.
-
+        allowed = traversals[resource]
+        if not request.method in allowed:
+            raise PermissionDenied
         if request.method == 'GET':
             if request.GET.get('form') == 'create':
                 context = methods.get_post_form(**opts)
@@ -144,5 +112,9 @@ def handler(request, parent=None, parent_id=None, resource=None, resource_id=Non
             template = post_result[0] and '%s_in_%s.html' % (resource, parent or 'index')\
                 or\
                 'post_form.html'
-            context = post_result[1]
+            context = post_result[1]       
     return HttpResponse(render(request, template, context), mimetype='text/html')
+
+
+
+    

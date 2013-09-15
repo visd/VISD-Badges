@@ -47,7 +47,7 @@ class TagFactory(factory.django.DjangoModelFactory):
 class GroupFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = NestedGroup
     
-    name = factory.Iterator(['guest','visd-guest','visd-user','visd-staff','admin'])
+    name = factory.Iterator(['guest','visd-guest','visd-user','visd-staff','admin','fsd-guest','fsd-staff'])
     
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -153,9 +153,10 @@ def add_groups_to_users():
 
 
 def assign_parents_to_groups(count):
-    group_list = [(
-        'guest', 'visd-guest'), ('visd-guest', 'visd-user'), ('visd-user', 'visd-staff'),
-        ('visd-staff', 'admin'), ('admin', '')]
+    group_list = [
+        ('guest', 'visd-guest'), ('visd-guest', 'visd-user'), ('visd-user', 'visd-staff'),
+        ('visd-staff', 'admin'), ('admin', ''), ('fsd-guest','fsd-staff'),('fsd-staff','')
+    ]
     results = []
     log = []
     for g, p in group_list[:count]:
