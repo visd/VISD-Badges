@@ -3,13 +3,14 @@ import functools
 import cPickle
 from importlib import import_module
 
+from utils import MemoizeMutable, _figure_role
+
 from badges.resource_configs import config_from_verbose
-
-
+from permits.configs.modifiers import base_config
+from permits.methods import reduce_permissions_dictionary_to
 
 
 class memoized(object):
-
     '''Decorator. Caches a function's return value each time it is called.
     If called later with the same arguments, the cached value is returned
     (not reevaluated).
@@ -40,19 +41,6 @@ class memoized(object):
         return functools.partial(self.__call__, obj)
 
 
-class MemoizeMutable:
-    def __init__(self, fn):
-        self.fn = fn
-        self.memo = {}
-
-    def __call__(self, *args, **kwds):
-        str = cPickle.dumps(args, 1)+cPickle.dumps(kwds, 1)
-        if not str in self.memo: 
-            self.memo[str] = self.fn(*args, **kwds)
-        
-        return self.memo[str]
-
-
 @memoized
 def model_for(resource):
     model_dict = config_from_verbose(resource)
@@ -75,20 +63,16 @@ def db_columns_of(this_model):
     return [f.column for f in this_model._meta.local_fields]
 
 
-@MemoizeMutable
-def role_for(user, all_user_groups, instance):
+def role_for(user, instance):
     """ Looks up the instance's user/group and compares against the user
     and the user's list of all groups. Then determines if the user is the
     owner, group or world of this instance.
     """
-    if user == getattr(instance, 'user', None):
-        user_role = 'owner'
-    elif hasattr(instance, 'group'):
-        if instance.group.name in all_user_groups:
-            user_role = 'group'
-    else:
-        user_role = 'world'
-    return user_role
+    return _figure_role(
+        (instance.user_id, instance.group_id),
+        user.id,
+        user.all_membership_ids
+    )
 
 
 @MemoizeMutable
@@ -114,3 +98,14 @@ def valid_traversals(from_res, config):
                     methods.append('POST')
                 result['many'][k] = methods
     return result
+
+
+@MemoizeMutable
+def instance_permissions(user, instance):
+    """ How should this user see this instance? Figure's out the user's status
+    compared to the instance, then figures owner/group/world for the user,
+    then fires off a new copy of that permissions dictionary for that role.
+    """
+    top_group = user.status_over(instance.group)
+    new_config = base_config(top_group.name)
+    return reduce_permissions_dictionary_to(role_for(user, instance), new_config)

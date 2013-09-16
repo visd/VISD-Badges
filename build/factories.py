@@ -40,7 +40,7 @@ class TagFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Tag
 
     user = RandomExistingUser()
-    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
+    group = factory.LazyAttribute(lambda t: t.user.groups.all()[0])
     word = SlugFuzz()
 
 
@@ -48,7 +48,7 @@ class GroupFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = NestedGroup
     
     name = factory.Iterator(['guest','visd-guest','visd-user','visd-staff','admin','fsd-guest','fsd-staff'])
-    
+
 
 class UserFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = CustomUser
@@ -63,14 +63,14 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     @factory.post_generation
     def add_groups(self, create, extracted, **kwargs):
-        self.memberships.add(RandomExistingGroup().fuzz())
+        self.groups.add(RandomExistingGroup().fuzz())
 
 
 class ToolFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Tool
 
     user = RandomExistingUser()
-    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
+    group = factory.LazyAttribute(lambda t: t.user.groups.all()[0])
     title = SlugFuzz()
     url_link = "http://www.example.com"
     url_title = factory.LazyAttribute(
@@ -82,7 +82,7 @@ class SkillsetFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Skillset
 
     user = RandomExistingUser()
-    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
+    group = factory.LazyAttribute(lambda t: t.user.groups.all()[0])
     title = FishFuzz(1, 3)
     short_description = factory.LazyAttribute(
         lambda t: "%s gets to have a short description." % t.title)
@@ -95,7 +95,7 @@ class ChallengeFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Challenge
 
     user = RandomExistingUser()
-    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
+    group = factory.LazyAttribute(lambda t: t.user.groups.all()[0])
     skillset = factory.SubFactory(SkillsetFactory)
     title = factory.LazyAttributeSequence(
         lambda t, n: "Challenge #%d for %s" % (n, t.skillset))
@@ -110,7 +110,7 @@ class ResourceFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Resource
 
     user = RandomExistingUser()
-    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
+    group = factory.LazyAttribute(lambda t: t.user.groups.all()[0])
     challenge = factory.SubFactory(ChallengeFactory)
     title = factory.LazyAttributeSequence(
         lambda t, n: 'Resource #%03d for %s' % (n, t.challenge))
@@ -124,7 +124,7 @@ class EntryFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Entry
 
     user = RandomExistingUser()
-    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
+    group = factory.LazyAttribute(lambda t: t.user.groups.all()[0])
     title = factory.LazyAttributeSequence(
         lambda t, n: "Entry #%d for %s" % (n, t.challenge))
     caption = "Students used two weeks of filming time to create this sped-up view of a plant's growth."
@@ -146,7 +146,7 @@ def add_groups_to_users():
     log = []
     for user in users:
         group = NestedGroup.objects.order_by('?')[0]
-        user.memberships.add(group)
+        user.groups.add(group)
         results.append(user)
         log.append('%s, added %s' % (str(user), str(group)))
     return [results, '\n'.join(log)]

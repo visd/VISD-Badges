@@ -105,3 +105,6 @@ def deverbose(verbose_name):
 @memoized
 def reverbose(singular_name):
     return {v: k for k, v in RESOURCE_NAMES}[singular_name]
+
+RESOURCES = [reverbose(k) for k in RESOURCE_CONFIGS.keys()]
+

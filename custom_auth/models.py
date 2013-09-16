@@ -1,8 +1,7 @@
 import itertools
 
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin,\
-Group, Permission
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
@@ -53,15 +52,13 @@ class CustomUserManager(BaseUserManager):
         return '%s/%s' % (scoped and (parent and ('%s' % parent.url)) or "", self.model._meta.verbose_name_plural)
 
 
-
-
-class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
+class CustomUser(AbstractBaseUser, URLmixin):
     """An extended User with more fields"""
 
     USERNAME_FIELD='email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
-    id = models.AutoField(primary_key=True)
+    _group = models.ForeignKey('NestedGroup', related_name='user', null=True)
     email = models.EmailField(max_length=60, db_index=True, unique=True)
     first_name = models.CharField(_('first name'), max_length=30, blank=True)
     last_name = models.CharField(_('last name'), max_length=30, blank=True)
@@ -72,14 +69,18 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
             help_text=_('Designates whether this user should be treated as '
                         'active. Unselect this instead of deleting accounts.'))
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
-    memberships = models.ManyToManyField('NestedGroup', related_name='users')
+    groups = models.ManyToManyField('NestedGroup', related_name='users')
 
     collection = CustomUserManager()
     objects = models.Manager()
 
     @memoized_property
-    def parent(self):
-        return None
+    def group(self):
+        return self._group
+
+    @memoized_property
+    def user(self):
+        return self
 
     def get_full_name(self):
             """
@@ -99,14 +100,33 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
             send_mail(subject, message, from_email, [self.email])
 
     @memoized_property
-    def all_memberships(self):
-        manager = self.memberships
+    def all_groups(self):
+        manager = self.groups
         return list(itertools.chain(
-                    *[manager.all_children_of(g.name)
+                    *[manager.all_children_of(g)
                       for g in
-                      manager.only('name',).all()]
+                      manager.only('name', 'parent').all()]
                     )
                     )
+
+    @memoized_property
+    def all_membership_ids(self):
+        manager = self.groups
+        return list(itertools.chain(
+                    *[manager.all_children_ids(g)
+                      for g in
+                      manager.only('name', 'parent').all()]
+                    )
+                    )
+
+    def status_over(self, target_group):
+        """ Given a group, what is the highest status this user can achieve over that group?
+        """
+        result = None
+        for group in self.groups.all():
+            if target_group in self.groups.all_children_of(group):
+                result = group
+        return result
 
     def __unicode__(self):
         return self.get_full_name()
@@ -125,13 +145,14 @@ class NestedGroupManager(models.Manager):
 
     use_for_related_fields = True
 
-    def _walk_children_of(self, name, head=None):
-        top_group = head or name
-        g = NestedGroup.objects.get(name=name)
-        if g.children.count():
-            for child in g.children.all():
-                self.family_tree[top_group].append(child.name)
-                self._walk_children_of(child.name, head=top_group)
+    def _walk_children_of(self, this_group, head=None):
+        """ accepts and returns group instances.
+        """
+        top_group = head or this_group
+        if this_group.children.count():
+            for child in this_group.children.all():
+                self.family_tree[top_group.name].append(child)
+                self._walk_children_of(child, head=top_group)
         return
 
     def get_by_name(self, name):
@@ -146,13 +167,19 @@ class NestedGroupManager(models.Manager):
         """
         return obj_group in self.all_children_of(user_group) or user_group == obj_group
 
-    def all_children_of(self, name):
+    def all_children_of(self, group):
         """ Also returns the parent in the list.
         """
+        name = group.name
         if not self.family_tree.get(name):
             self.family_tree[name] = []
-            self._walk_children_of(name)
-        return [name] + self.family_tree[name]
+            self._walk_children_of(group)
+        return [group] + self.family_tree[name]
+
+    def all_children_ids(self, group):
+        """ Converts all_children_of to ids.
+        """
+        return [g.pk for g in self.all_children_of(group)]
 
     def top_groups(self, group_list):
         """ Given a list of groups, returns the groups which have no parents in the list.
@@ -171,20 +198,29 @@ class NestedGroupManager(models.Manager):
         return '%s/%s' % (scoped and (parent and ('%s' % parent.url)) or "", self.model._meta.verbose_name_plural)
 
 
-class NestedGroup(Group):
+class NestedGroup(models.Model):
     """
-    Look in this app's __init__.py to see how we add a 'parent' field to the built-in
-    Group. Otherwise this is a proxy model for adding functions as
+    Lord help us, we broke the admin. No going back now, unless we have to.
     """
-    collection = NestedGroupManager()
-    objects = models.Manager()
+    name = models.CharField(max_length=32, primary_key=True)
+    parent = models.ForeignKey('self', related_name='children', blank=True, null=True)
+    _user = models.ForeignKey(CustomUser, related_name='group', null=True)
+
+    objects = NestedGroupManager()
+
+    @memoized_property
+    def user(self):
+        return self._user
+
+    @memoized_property
+    def group(self):
+        return self
 
     class Meta:
-        proxy = True
-        verbose_name = 'membership'
-        verbose_name_plural = 'memberships'
+        verbose_name = 'group'
+        verbose_name_plural = 'groups'
 
-    def __str__(self):
+    def __unicode__(self):
         return self.name
 
     def natural_key(self):
