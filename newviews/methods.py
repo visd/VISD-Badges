@@ -391,7 +391,6 @@ def get_collection(parent=None, parent_id=None, resource=None,
         All the legal checks are in the handler. Once we recurse we assume
         our configuration is only throwing valid responses.
     """
-    logging.info('getting collection for %s, of parent %s = %s' % (resource, parent, config[parent]))
     allowed = permit.methods_for_traversal(parent or 'index', resource, config)
     if not depth:
         # Since we're already GETting this, no need to offer it to the client
