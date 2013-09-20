@@ -133,6 +133,8 @@ BASE_PERMISSIONS = {
     },
     'users': {
         'fields': {
+            'user': '0000',
+            'group': '0000',
             'first_name': '0640',
             'last_name': '0640',
             'email': '0640',
@@ -148,6 +150,7 @@ BASE_PERMISSIONS = {
     'memberships': {
         'fields': {
             'name': '0600',
+            'parent': '0000'
         },
         'methods': {
             'PUT': '0000',
