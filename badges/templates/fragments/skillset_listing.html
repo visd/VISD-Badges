@@ -1,14 +1,15 @@
-
+<div class='row-fluid'>
     {% with meta=skillset.meta %}
         {% include 'fragments/editbar.html' %}
     {% endwith %}
-    <div>
-        <img style = "width:80%" src="http://i.imgur.com/WrkwjSF.png" alt=""></div>
+    <div class = 'span2'>
+        <img style = "width:80%" src="http://i.imgur.com/WrkwjSF.png" alt="">
+    </div>
+    <div class = 'span10'>
         <a href="{{skillset.meta.url}}"><h3>{{skillset.fields.title | title }}</h3></a>
         <p class="lead">{{skillset.fields.short_description}}<p>
+            {% with traversals=skillset.relations %}
+                {% include 'fragments/traversals.html' %}
+            {% endwith %}
     </div>
-    <div>
-        {% with traversals=skillset.traversals %}
-            {% include 'fragments/traversals.html' %}
-        {% endwith %}
-    </div>
+</div>

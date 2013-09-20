@@ -1,12 +1,15 @@
 import pprint
 
 from django.test import TestCase
+from django.test.client import Client, RequestFactory
 
-from newviews import methods
+from newviews import methods, helpers
 
 from badges.models import Challenge
 
 from build.factories import GroupFactory, UserFactory, ChallengeFactory
+
+from permits import methods as permit
 
 pp = pprint.PrettyPrinter()
 
@@ -50,9 +53,8 @@ class ViewMethodTestCases(TestCase):
                         'slug': '0400',
                         'created_at': '0000',
                         'skillset': '0755',
-                        'skillset_id': '0640',
-                        'owner': '0755',
-                        'owner_id': '0600',
+                        'user': '0755',
+                        'group': '0755',
                         'entries': '0755',
                         'resources': '0755',
                         'tags': '0755',
@@ -65,6 +67,13 @@ class ViewMethodTestCases(TestCase):
                     }
                 }
             }
+
+        self.tapered_config = permit.reduce_permissions_dictionary_to('group',self.challenge_config)
+
+        self.client = Client()
+
+        self.requestFactory = RequestFactory()
+
         self.group = GroupFactory.create()
 
         self.user = UserFactory.create()
@@ -107,6 +116,28 @@ class ViewMethodTestCases(TestCase):
         print "Original config: %s" % self.narrowedConfig
         print "Result: %s" % self.viewmap
 
+    def test_sorting_of_traversals(self):
+        self.traversals = helpers.valid_traversals()
+
+    def test_posting_to_collection_with_valid_fields(self):
+        print '\n'
+        print 'Posting to a collection.'
+        self.request = self.requestFactory.post('/skillsets/11/challenges',
+                                    data={
+                                        'title': 'Make a stop-motion movie',
+                                        'short_description': 'A brief description',
+                                        'long_description': 'A much longer description.',
+                                        'sudo': 'A malicious attack!'
+                                    })
+        self.response = methods.post_to_collection(
+            request = self.request,
+            resource = 'challenges',
+            config = self.challenge_config
+            )
+        self.form = self.response[1]['target']['form']
+        pp.pprint(self.form.validate())
+        pp.pprint(self.response)
+
     def test_get_instance(self):
         print '\n'
         print 'Getting an instance'
@@ -118,4 +149,4 @@ class ViewMethodTestCases(TestCase):
         print '\n'
         print 'Getting a post form'
         self.form_dict = methods.get_post_form(resource='challenges', config=self.challenge_config)
-        pp.pprint(self.form_dict['form'].as_p())
+        pp.pprint(self.form_dict['target']['form'].as_p())

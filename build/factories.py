@@ -47,8 +47,8 @@ class TagFactory(factory.django.DjangoModelFactory):
 class GroupFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = NestedGroup
     
-    name = factory.Iterator(['guest','visd-guest','visd-user','visd-staff','admin'])
-    
+    name = factory.Iterator(['visd-guest','visd-user','visd-staff','fsd-guest','fsd-staff','admin'])
+
 
 class UserFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = CustomUser
@@ -62,8 +62,29 @@ class UserFactory(factory.django.DjangoModelFactory):
     password = HexFuzz()
 
     @factory.post_generation
-    def add_groups(self, create, extracted, **kwargs):
+    def add_memberships(self, create, extracted, **kwargs):
         self.memberships.add(RandomExistingGroup().fuzz())
+
+    @factory.post_generation
+    def add_supergroup(self, create, extracted, **kwargs):
+        self.group = NestedGroup.objects.get(name="admin")
+
+
+class SuperUserFactory(factory.django.DjangoModelFactory):
+    FACTORY_FOR = CustomUser
+
+    first_name = 'Andy'
+    last_name = 'James'
+    email = 'ajames@vashonsd.org'
+    password = HexFuzz()
+
+    @factory.post_generation
+    def add_groups(self, create, extracted, **kwargs):
+        self.memberships.add(NestedGroup.objects.get(name='admin'))
+
+    @factory.post_generation
+    def add_supergroup(self, create, extracted, **kwargs):
+        self.group = NestedGroup.objects.get(name="admin")
 
 
 class ToolFactory(factory.django.DjangoModelFactory):
@@ -152,19 +173,25 @@ def add_groups_to_users():
     return [results, '\n'.join(log)]
 
 
-def assign_parents_to_groups(count):
-    group_list = [(
-        'guest', 'visd-guest'), ('visd-guest', 'visd-user'), ('visd-user', 'visd-staff'),
-        ('visd-staff', 'admin'), ('admin', '')]
+def assign_parents_and_superuser_to_groups(count=None):
+    group_list = [
+        ('visd-guest', 'visd-user'), ('visd-user', 'visd-staff'),
+        ('visd-staff', 'admin'), ('admin', ''), ('fsd-guest', 'fsd-staff'),
+        ('fsd-staff', 'admin')
+    ]
+    su = CustomUser.objects.get(email='ajames@vashonsd.org')
+    count = count or len(group_list)
     results = []
     log = []
     for g, p in group_list[:count]:
+        this_group = NestedGroup.objects.get_or_create(name=g)[0]
+        this_group.user = su
+        log.append('Group %s is owned by superuser %s' % (str(g), str(su)))
         if p:
-            this_group = NestedGroup.objects.get_or_create(name=g)[0]
             this_parent = NestedGroup.objects.get_or_create(name=p)[0]
             this_group.parent = this_parent
-            results.append(this_group)
             log.append('Group %s got a parent group %s' % (g, p))
+        results.append(this_group)
     return [results, '\n'.join(log)]
 
 

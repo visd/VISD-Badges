@@ -1,10 +1,11 @@
+import itertools
+
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin,\
-Group, Permission
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
-from badges.helpers import memoized_property
+from custom.utils import memoized_property
 from badges.model_mixins import URLmixin
 
 
@@ -51,15 +52,12 @@ class CustomUserManager(BaseUserManager):
         return '%s/%s' % (scoped and (parent and ('%s' % parent.url)) or "", self.model._meta.verbose_name_plural)
 
 
-
-
-class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
+class CustomUser(AbstractBaseUser, URLmixin):
     """An extended User with more fields"""
 
     USERNAME_FIELD='email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
-
-    id = models.AutoField(primary_key=True)
+    group = models.ForeignKey('NestedGroup', related_name='users', null=True)
     email = models.EmailField(max_length=60, db_index=True, unique=True)
     first_name = models.CharField(_('first name'), max_length=30, blank=True)
     last_name = models.CharField(_('last name'), max_length=30, blank=True)
@@ -70,13 +68,21 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
             help_text=_('Designates whether this user should be treated as '
                         'active. Unselect this instead of deleting accounts.'))
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
-    memberships = models.ManyToManyField('NestedGroup', related_name='users')
+    memberships = models.ManyToManyField('NestedGroup', related_name='members')
 
     collection = CustomUserManager()
     objects = models.Manager()
 
     @memoized_property
-    def parent(self):
+    def user(self):
+        return self
+
+    @memoized_property
+    def user_id(self):
+        return self.id
+
+    @memoized_property
+    def parent_instance(self):
         return None
 
     def get_full_name(self):
@@ -96,6 +102,39 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, URLmixin):
             """
             send_mail(subject, message, from_email, [self.email])
 
+    @memoized_property
+    def all_groups(self):
+        manager = self.memberships
+        return list(itertools.chain(
+                    *[manager.children_and_self_of(g)
+                      for g in
+                      manager.only('name', 'parent').all()]
+                    )
+                    )
+
+    @memoized_property
+    def all_group_ids(self):
+        manager = self.memberships
+        return list(itertools.chain(
+                    *[manager.all_children_ids(g)
+                      for g in
+                      manager.only('name', 'parent').all()]
+                    )
+                    )
+
+    def status_over(self, target_group):
+        """ Given a group, what is the highest-status group 
+        this user can hold over that group?
+        Ex.: A user with 'visd-staff' and a target of 'visd-guest'
+        returns 'visd-staff.'
+        """
+        result = None
+        for group in self.memberships.all():
+            if set(self.memberships.children_and_self_of(group)) &\
+            set(self.memberships.children_and_self_of(target_group)):
+                result = group
+        return result
+
     def __unicode__(self):
         return self.get_full_name()
 
@@ -113,6 +152,32 @@ class NestedGroupManager(models.Manager):
 
     use_for_related_fields = True
 
+    def _walk_children_of(self, this_group, head=None):
+        """ accepts and returns group instances.
+        """
+        top_group = head or this_group
+        if this_group.children.count():
+            for child in this_group.children.all():
+                self.family_tree[top_group.name].append(child)
+                self._walk_children_of(child, head=top_group)
+        return
+
+    # def add(self, *groups):
+    #     """ We want to make sure that a group an its ancestor are never together.
+    #     """
+    #     if len(groups) > 1:
+    #         groups = self.top_groups(list(groups))
+    #     super(NestedGroupManager, self).add(*groups)
+
+        # for group in groups:
+        #     for g in self.all():
+        #         if g in self.children_and_self_of(group):
+        #             self.remove(g)
+        #         if group in self.children_and_self_of(g):
+        #             pass
+
+
+
     def get_by_name(self, name):
         return self.get(name=name)
 
@@ -123,13 +188,24 @@ class NestedGroupManager(models.Manager):
         """ Can a user of user_group access an object of obj_group?
             True of False.
         """
-        return obj_group in self.all_children_of(user_group) or user_group == obj_group
+        return obj_group in self.children_and_self_of(user_group) or user_group == obj_group
 
-    def all_children_of(self, name):
+    def only_children_of(self, group):
+        name = group.name
         if not self.family_tree.get(name):
             self.family_tree[name] = []
-            self.walk_children_of(name) 
+            self._walk_children_of(group)
         return self.family_tree[name]
+
+    def children_and_self_of(self, group):
+        """ Also returns the parent in the list.
+        """
+        return [group] + self.only_children_of(group)
+
+    def all_children_ids(self, group):
+        """ Converts children_and_self_of to ids.
+        """
+        return [g.pk for g in self.children_and_self_of(group)]
 
     def top_groups(self, group_list):
         """ Given a list of groups, returns the groups which have no parents in the list.
@@ -137,17 +213,8 @@ class NestedGroupManager(models.Manager):
         """
         child_set = set([])
         for group in group_list:
-            child_set = child_set | set(self.all_children_of(group))
+            child_set = child_set | set(self.only_children_of(group))
         return tuple(set(group_list)-child_set)
-
-    def walk_children_of(self, name, head=None):
-        top_group = head or name
-        g = self.get(name=name)
-        if g.children.count():
-            for child in g.children.all():
-                self.family_tree[top_group].append(child.name)
-                self.walk_children_of(child, head=top_group)
-        return
 
     def create_group(self, name, parent):
         pass
@@ -157,24 +224,33 @@ class NestedGroupManager(models.Manager):
         return '%s/%s' % (scoped and (parent and ('%s' % parent.url)) or "", self.model._meta.verbose_name_plural)
 
 
-class NestedGroup(Group):
+class NestedGroup(models.Model, URLmixin):
     """
-    Look in this app's __init__.py to see how we add a 'parent' field to the built-in
-    Group. Otherwise this is a proxy model for adding
+    Lord help us, we broke the admin. No going back now, unless we have to.
     """
-    collection = NestedGroupManager()
-    objects = models.Manager()
-
-    class Meta:
-        proxy = True
-        verbose_name = 'membership'
-        verbose_name_plural = 'memberships'
+    name = models.CharField(max_length=32, primary_key=True)
+    parent = models.ForeignKey('self', related_name='children', blank=True, null=True)
+    user = models.ForeignKey(CustomUser, related_name='groups', null=True)
+    
+    objects = NestedGroupManager()
 
     @memoized_property
-    def parent(self):
+    def group(self):
+        return self
+
+    @memoized_property
+    def group_id(self):
+        return self.pk
+
+    @memoized_property
+    def parent_instance(self):
         return None
 
-    def __str__(self):
+    class Meta:
+        verbose_name = 'group'
+        verbose_name_plural = 'groups'
+
+    def __unicode__(self):
         return self.name
 
     def natural_key(self):

@@ -6,7 +6,9 @@ BASE_PERMISSIONS = {
             'entries': '0711',
             'tags': '0711',
             'tools': '0755',
-            'events': '0755'
+            'events': '0755',
+            'users': '0755',
+            'groups': '0500'
         },
         'methods': {
             'GET': '0444'
@@ -15,33 +17,33 @@ BASE_PERMISSIONS = {
     'skillsets': {
         'fields': {
             'user': '0500',
-            'user_id': '0600',
-            'group': '0600',
-            'group_id': '0600',
+            'group': '0700',
             'title': '0640',
             'short_description': '0640',
             'long_description': '0640',
             'slug': '0400',
             'created_at': '0000',
-            'challenges': '0311'
+            'challenges': '0755'
         },
         'methods': {
             'PUT': '0500',
-            'GET': '0555',
+            'GET': '0550',
             'DELETE': '0500'
         }
     },
     'challenges': {
         'fields': {
             'user': '0550',
-            'user_id': '0600',
-            'group': '0600',
+            'user_id': '0200',
+            'group': '0700',
+            'group_id': '0200',
             'title': '0640',
             'short_description': '0640',
             'long_description': '0640',
             'slug': '0400',
             'created_at': '0000',
             'skillset': '0550',
+            'skillset_id': '0200',
             'entries': '0755',
             'resources': '0755',
             'tags': '0755',
@@ -49,7 +51,7 @@ BASE_PERMISSIONS = {
         },
         'methods': {
             'PUT': '0700',
-            'GET': '0555',
+            'GET': '0550',
             'DELETE': '0500'
         }
     },
@@ -100,7 +102,7 @@ BASE_PERMISSIONS = {
         },
         'methods': {
             'PUT': '0700',
-            'GET': '0555',
+            'GET': '0550',
             'DELETE': '0500'
         }
     },
@@ -131,6 +133,8 @@ BASE_PERMISSIONS = {
     },
     'users': {
         'fields': {
+            'user': '0000',
+            'group': '0000',
             'first_name': '0640',
             'last_name': '0640',
             'email': '0640',
@@ -141,6 +145,17 @@ BASE_PERMISSIONS = {
             'PUT': '0700',
             'GET': '0550',
             'DELETE': '0500'
+        }
+    },
+    'memberships': {
+        'fields': {
+            'name': '0600',
+            'parent': '0000'
+        },
+        'methods': {
+            'PUT': '0000',
+            'GET': '0500',
+            'DELETE': '0000'
         }
     }
 }
