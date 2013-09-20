@@ -1,4 +1,4 @@
-from helpers import memoized
+from custom.utils import memoized
 
 RESOURCE_CONFIGS = {
 

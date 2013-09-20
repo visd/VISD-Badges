@@ -51,7 +51,7 @@ BASE_PERMISSIONS = {
         },
         'methods': {
             'PUT': '0700',
-            'GET': '0555',
+            'GET': '0550',
             'DELETE': '0500'
         }
     },
@@ -143,6 +143,16 @@ BASE_PERMISSIONS = {
             'PUT': '0700',
             'GET': '0550',
             'DELETE': '0500'
+        }
+    },
+    'memberships': {
+        'fields': {
+            'name': '0600',
+        },
+        'methods': {
+            'PUT': '0000',
+            'GET': '0500',
+            'DELETE': '0000'
         }
     }
 }

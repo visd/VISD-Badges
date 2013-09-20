@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
-from badges.helpers import memoized_property
+from custom.utils import memoized_property
 from badges.model_mixins import URLmixin
 
 
@@ -57,8 +57,7 @@ class CustomUser(AbstractBaseUser, URLmixin):
 
     USERNAME_FIELD='email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
-
-    _group = models.ForeignKey('NestedGroup', related_name='user', null=True)
+    group = models.ForeignKey('NestedGroup', related_name='users', null=True)
     email = models.EmailField(max_length=60, db_index=True, unique=True)
     first_name = models.CharField(_('first name'), max_length=30, blank=True)
     last_name = models.CharField(_('last name'), max_length=30, blank=True)
@@ -69,18 +68,22 @@ class CustomUser(AbstractBaseUser, URLmixin):
             help_text=_('Designates whether this user should be treated as '
                         'active. Unselect this instead of deleting accounts.'))
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
-    groups = models.ManyToManyField('NestedGroup', related_name='users')
+    memberships = models.ManyToManyField('NestedGroup', related_name='members')
 
     collection = CustomUserManager()
     objects = models.Manager()
 
     @memoized_property
-    def group(self):
-        return self._group
-
-    @memoized_property
     def user(self):
         return self
+
+    @memoized_property
+    def user_id(self):
+        return self.id
+
+    @memoized_property
+    def parent_instance(self):
+        return None
 
     def get_full_name(self):
             """
@@ -101,17 +104,17 @@ class CustomUser(AbstractBaseUser, URLmixin):
 
     @memoized_property
     def all_groups(self):
-        manager = self.groups
+        manager = self.memberships
         return list(itertools.chain(
-                    *[manager.all_children_of(g)
+                    *[manager.children_and_self_of(g)
                       for g in
                       manager.only('name', 'parent').all()]
                     )
                     )
 
     @memoized_property
-    def all_membership_ids(self):
-        manager = self.groups
+    def all_group_ids(self):
+        manager = self.memberships
         return list(itertools.chain(
                     *[manager.all_children_ids(g)
                       for g in
@@ -120,11 +123,15 @@ class CustomUser(AbstractBaseUser, URLmixin):
                     )
 
     def status_over(self, target_group):
-        """ Given a group, what is the highest status this user can achieve over that group?
+        """ Given a group, what is the highest-status group 
+        this user can hold over that group?
+        Ex.: A user with 'visd-staff' and a target of 'visd-guest'
+        returns 'visd-staff.'
         """
         result = None
-        for group in self.groups.all():
-            if target_group in self.groups.all_children_of(group):
+        for group in self.memberships.all():
+            if set(self.memberships.children_and_self_of(group)) &\
+            set(self.memberships.children_and_self_of(target_group)):
                 result = group
         return result
 
@@ -155,6 +162,22 @@ class NestedGroupManager(models.Manager):
                 self._walk_children_of(child, head=top_group)
         return
 
+    # def add(self, *groups):
+    #     """ We want to make sure that a group an its ancestor are never together.
+    #     """
+    #     if len(groups) > 1:
+    #         groups = self.top_groups(list(groups))
+    #     super(NestedGroupManager, self).add(*groups)
+
+        # for group in groups:
+        #     for g in self.all():
+        #         if g in self.children_and_self_of(group):
+        #             self.remove(g)
+        #         if group in self.children_and_self_of(g):
+        #             pass
+
+
+
     def get_by_name(self, name):
         return self.get(name=name)
 
@@ -165,21 +188,24 @@ class NestedGroupManager(models.Manager):
         """ Can a user of user_group access an object of obj_group?
             True of False.
         """
-        return obj_group in self.all_children_of(user_group) or user_group == obj_group
+        return obj_group in self.children_and_self_of(user_group) or user_group == obj_group
 
-    def all_children_of(self, group):
-        """ Also returns the parent in the list.
-        """
+    def only_children_of(self, group):
         name = group.name
         if not self.family_tree.get(name):
             self.family_tree[name] = []
             self._walk_children_of(group)
-        return [group] + self.family_tree[name]
+        return self.family_tree[name]
+
+    def children_and_self_of(self, group):
+        """ Also returns the parent in the list.
+        """
+        return [group] + self.only_children_of(group)
 
     def all_children_ids(self, group):
-        """ Converts all_children_of to ids.
+        """ Converts children_and_self_of to ids.
         """
-        return [g.pk for g in self.all_children_of(group)]
+        return [g.pk for g in self.children_and_self_of(group)]
 
     def top_groups(self, group_list):
         """ Given a list of groups, returns the groups which have no parents in the list.
@@ -187,7 +213,7 @@ class NestedGroupManager(models.Manager):
         """
         child_set = set([])
         for group in group_list:
-            child_set = child_set | set(self.all_children_of(group))
+            child_set = child_set | set(self.only_children_of(group))
         return tuple(set(group_list)-child_set)
 
     def create_group(self, name, parent):
@@ -204,17 +230,21 @@ class NestedGroup(models.Model):
     """
     name = models.CharField(max_length=32, primary_key=True)
     parent = models.ForeignKey('self', related_name='children', blank=True, null=True)
-    _user = models.ForeignKey(CustomUser, related_name='group', null=True)
-
+    user = models.ForeignKey(CustomUser, related_name='groups', null=True)
+    
     objects = NestedGroupManager()
-
-    @memoized_property
-    def user(self):
-        return self._user
 
     @memoized_property
     def group(self):
         return self
+
+    @memoized_property
+    def group_id(self):
+        return self.pk
+
+    @memoized_property
+    def parent_instance(self):
+        return None
 
     class Meta:
         verbose_name = 'group'

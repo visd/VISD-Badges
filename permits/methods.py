@@ -57,6 +57,40 @@ def can(whom, method, pcode):
     return result and True or False
 
 
+def allowed_methods_of(method_dict):
+    """ Accepts a dictionary, isolated by user type, plucked from the "methods" portion
+    of a permissions config. Note that these are methods on the instance: We can
+    see it, change it, delete it.
+
+    >>> test_dict = {'PUT': 1, 'GET': 5, 'DELETE': 0}
+
+    >>> print allowed_methods_of(test_dict)
+    {'offered': ['GET'], 'allowed': ['PUT', 'GET']}
+    """
+    result = {'allowed': [], 'offered': []}
+    for method, code in method_dict.iteritems():
+        if code & 1:
+            result['allowed'].append(method)
+            # No point offering a method that isn't allowed -- and so we nest.
+            if code & 4:
+                result['offered'].append(method)
+    return result
+
+
+def methods_for_traversal(from_resource, to_resource, narrowed_config):
+    """ Accepts a config narrowed to one user_role (world, group, owner).
+    Looks up the from_resource, finds to_resource in 'fields' and declares
+    what that bit allows of 'GET' and 'POST'.
+    """
+    methods = []
+    t = narrowed_config[from_resource]['fields'][to_resource]
+    if t & 4:
+        methods.append('GET')
+    if t & 2:
+        methods.append('POST')
+    return methods 
+
+
 def permissions_digit_for(type, pcode):
     """ Isolates the number for a group. Accepts the string version of an octal
     permissions code.
@@ -153,8 +187,6 @@ def scope_allows_instance(user_type, permissions):
             results.append(m)
     return results
 
-# def field_permissions_digit_for(resource,field):
-
 
 def fields_permitted_to(user_type, method, resource):
     """ Scans the attributes of the resource and returns a list of the ones 
@@ -168,6 +200,19 @@ def fields_permitted_to(user_type, method, resource):
     """
     field_permissions = config_of(resource)['fields']
     return permitted_set(field_permissions, user_type, method)
+
+
+# def can_traverse(d):
+#     """ Pass in a shallow dictionary of fields, along with their permission codes.
+#     Returns which ones the users can traverse. This is to control the
+#     nested retrieval of resources. It doesn't determine which ones the client
+#     sees as available. It's possible to recurse through resources via a collection
+#     the user cannot GET directly
+
+#     >>> print can_traverse({'foo':7,'bar':0,'baz':1})
+#     ['foo','baz']
+#     """
+#     return [k for k, v in d.iteritems() if v & 1]
 
 
 # def class_permitted_to(user_type,method,resource):

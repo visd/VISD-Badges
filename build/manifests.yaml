@@ -3,9 +3,11 @@ manifests:
       description: A small population of instances per model.
       premake:
       - factory: GroupFactory
-        count: 7
+        count: 6
       - factory: UserFactory
         count: 6
+      - factory: SuperUserFactory
+        count: 1
       - factory: SkillsetFactory
         count: 7
         children:
@@ -30,9 +32,7 @@ manifests:
         join_to: [Challenge, Entry]
         target_field: tools
         count: 3
-      - factory: assign_parents_to_groups
-        count: 7
-
+      - factory: assign_parents_and_superuser_to_groups
 
     - title: medium
       description: Closer to the a realistic size of the database at about 1 year in.

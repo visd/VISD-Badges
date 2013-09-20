@@ -20,7 +20,7 @@ Omissions are cumulative. The parser goes up the list from 0 up picking up field
 You can specify 'unomit' to put something back.
 """
 
-from newviews.helpers import memoized
+from custom.utils import memoized
 
 VIEW_DEPTHS = {
     'challenges': {

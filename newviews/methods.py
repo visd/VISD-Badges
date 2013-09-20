@@ -1,7 +1,5 @@
 """
-The job of these methods is to contruct a dictionary
-
-Views are constructed from the intersection of the desired fields in the
+The job of these methods is to contruct a dictionary.
 """
 import logging
 
@@ -12,18 +10,12 @@ from permits import methods as permit
 from badges.resource_configs import deverbose, reverbose
 from view_configs.mods import filter_permissions_for
 
-from helpers import model_for, parent_of, db_columns_of
+from helpers import model_for, parent_of, db_columns_of, valid_traversals,\
+    instance_permissions, build_Q_set
 
 logger = logging.getLogger(__name__)
 
 VIEW_TRAVERSE_DEPTH = 2
-
-# METHODS_MAP = {
-#     'GET': 'read',
-#     'PUT': 'write',
-#     'DELETE': 'write',
-#     'POST': 'write'
-# }
 
 
 def access_as(user_id, user_groups, res_owner, res_group):
@@ -50,6 +42,7 @@ def access_as(user_id, user_groups, res_owner, res_group):
 of the target dictionaries. In other words, these are the functions that translate
 permissions in to views.
 """
+
 
 def condition_view(original_dict, modifier):
     """ Takes a dictionary of permissions and omits the keys in corresponding lists
@@ -87,26 +80,6 @@ def sorted_fields_of(filtered_config):
                     result['fields']['read'].append(k)
                 if v & 2:
                     result['fields']['write'].append(k)
-    return result
-
-
-def allowed_methods_of(method_dict):
-    """ Accepts a dictionary, isolated by user type, plucked from the "methods" portion
-    of a permissions config. Note that these are methods on the instance: We can
-    see it, change it, delete it.
-
-    >>> test_dict = {'PUT': 1, 'GET': 5, 'DELETE': 0}
-
-    >>> print allowed_methods_of(test_dict)
-    {'offered': ['GET'], 'allowed': ['PUT', 'GET']}
-    """
-    result = {'allowed': [], 'offered': []}
-    for method, code in method_dict.iteritems():
-        if code & 1:
-            result['allowed'].append(method)
-            # No point offering a method that isn't allowed -- and so we nest.
-            if code & 4:
-                result['offered'].append(method)
     return result
 
 
@@ -181,146 +154,116 @@ def manager_from(parent, parent_id, resource):
     return getattr(model_for(parent).objects.get(pk=parent_id), resource)
 
 
-def can_traverse(d):
-    """ Pass in a shallow dictionary of fields, along with their permission codes.
-    Returns which ones the users can traverse. This is to control the
-    nested retrieval of resources. It doesn't determine which ones the client
-    sees as available. It's possible to recurse through resources via a collection
-    the user cannot GET directly
-
-    >>> print can_traverse({'foo':7,'bar':0,'baz':1})
-    ['foo','baz']
-    """
-    return [k for k, v in d.iteritems() if v & 1]
-
-""" An optimization:
-
-From the model class, find the database fields.
-
-Delay retrieving the instance until we know what fields we'll retrieve, then
-
-(manager).only(*fields)
-"""
-
-
 def get_instance(parent=None, parent_id=None,
                  resource=None, instance=None,
-                 user=None, user_role=None, config=None,
-                 depth=0):
-    """ Handles instances. Returns a dictionary of fields, traversals and
-        allowed methods for the user to perform on the instance.
+                 config=None,
+                 user=None, depth=0):
+    """ Handles instances. Returns a dictionary of:
+        - metadata about the instance;
+        - the fields the user is entitled to GET,
+        - relations (related resources)
 
-        Think of a url such as '/foo/134'. This function would receive
-        'resource="foo",instance = <fooinstance> and so on.'
+        If the method for any relation is anything but GET
+        we don't recurse into it.
 
-        If the method is anything but GET we don't recurse.
-        Accepts, among many other parameters, an instance of the given resource type.
+        Note that the config has been helpfully pre-tapered down to
+        just a single bit for each field and method. So at this level,
+        we don't 'know' if the user is owner, group, world and what
+        group. Doesn't matter, just do your work, you function.
 
-        Some day, when we're not relying on Django model/instance methods, we can pass
-        dictionaries around instead of instances and be many times more efficient 
-        with the database.
+        Some day, when we're not relying on Django model/instance methods,
+        we can pass dictionaries around instead of instances and be, perhaps,
+        more efficient with the database.
         Someday.
     """
+    allowed = permit.allowed_methods_of(config[resource]['methods'])['allowed']
 
-    # Now we have to weigh the user vs. the object to determine the user role
-    # For now:
-    user_role = 'group'
+    # If we called this directly, we want to remove a redundant 'GET'
+    # from the list of methods we'll call to the user.
+    if not depth:
+        allowed.remove('GET')
+    # Even an empty set will return this:
+    result = {'meta': {}, 'fields': {}, 'relations': {}}
+    parent_url = parent and '/%s/%s' % (parent, parent_id) or ''
 
-    # We narrow the scope of the config to just this resource.
-    this_config = config[resource]
+    # We now remake the config from the user.
+    config = instance_permissions(user, instance)
+    result['meta'] = {'url': '%s%s' % (parent_url, instance.url),
+                      'methods': allowed,
+                      'tagged_with': [resource],
+                      'resource': resource}
 
-    # We narrow it by filtering it against the view for the current depth.
-    narrow_config = filter_permissions_for(resource, this_config, depth)
+    # Now we sort the config into the kind of dictionary we are looking
+    # for:
+    viewmap = viewmap_of(config[resource])
 
-    allowed = permit.scope_allows_instance(user_role, narrow_config)
-    if 'GET' in allowed:
-        # If we called this directly, we want to remove a redundant 'GET'
-        # from the list of methods we'll call to the user.
-        if not depth:
-            allowed.remove('GET')
-
-        new_config = permit.reduce_permissions_dictionary_to(
-            user_role, narrow_config)
-
-        # Even an empty set will return this:
-        result = {'meta': {}, 'fields': {}, 'relations': {}}
-        parent_url = parent and '/%s/%s' % (parent, parent_id) or ''
-        result['meta'] = {'url': '%s%s' % (parent_url, instance.url),
-                          'methods': allowed,
-                          'tagged_with': [resource],
-                          'resource': resource}
-        # And now, the "I'd like to thank my parents" clause.
-        # There are two reasons why we might stuff a link to the parent in this dictionary.
-        # One is that this is exactly the resource asked for in the user's
-        # request. The other is that the instance's parent is not the parent
-        # sent to this function.
-        if instance.parent:
-            if (not depth) or (instance.parent._meta.verbose_name_plural != parent):
-                result[
-                    'meta']['parent'] = {'resource': unicode(instance.parent._meta.verbose_name_plural),
-                                         'title': str(instance.parent),
-                                         'url': instance.parent.url
-                                         }
-
-        # Now we sort the config into the kind of dictionary we are looking
-        # for:
-        viewmap = viewmap_of(new_config)
-        result['fields'] = {f: getattr(instance, f) for f in viewmap['fields']['read']}
-        # Now we add the traversables and, if we have more to go, fire off a
-        # call for each one:
-        # result['traversals'] = viewmap['traversals']
-        #  ex: viewmap['traversals']==
-        #         [{'methods': ['POST', 'GET'], 'resource': 'user', 'url': 'user'}]
-        for t in viewmap['traversals']:
-            if 'GET' in t['methods']:
-                # target_resource == 'user'
-                target_resource = t['resource']
-                # What do we get when we access the instance field named the
-                # same as the resource?
-                target = getattr(instance, target_resource)
-                is_collection = target.__class__.__name__ in (
-                    'RelatedManager', 'ManyRelatedManager')
-                if VIEW_TRAVERSE_DEPTH - depth:
+    # And now, the "I'd like to thank my parents" clause.
+    # There are two reasons why we might stuff a link to the parent in this dictionary.
+    # One is that this is exactly the resource asked for in the user's
+    # request. The other is that the instance's parent is not the parent
+    # sent to this function.
+    if instance.parent_instance:
+        parent_resource = instance.parent_instance._meta.verbose_name_plural
+        if (not depth) or (parent_resource != parent):
+            result['meta']['parent'] = {'resource': parent_resource,
+                                        'title': str(instance.parent_instance),
+                                        'url': instance.parent_instance.url
+                                        }
+            viewmap['traversals'] = [
+                t for t in viewmap['traversals'] if t['resource'] != parent_resource
+            ]
+    result['fields'] = {f: getattr(instance, f) for f in viewmap['fields']['read']}
+    # Now we add the traversables and, if we have more to go, fire off a
+    # call for each one:
+    forward = valid_traversals(resource, config)
+    for t in viewmap['traversals']:
+        if 'GET' in t['methods']:
+            target_resource = t['resource']
+            is_collection = target_resource in forward['many'].keys()
+            if VIEW_TRAVERSE_DEPTH - depth:
+                if is_collection:
                     opts = {'parent': resource,
                             'parent_id': instance.pk,
                             'resource': target_resource,
                             'user': user,
-                            'user_role': user_role,
                             'config': config,
-                            'depth': depth + 1}
-                    # We're trying to find out if we're looking at a manager or an instance.
-                    # Wiser ways of doing this are welcome as this feels a
-                    # little fluky.
-                    if is_collection:
-                        relation = get_collection(**opts)
-                    else:
-                        opts['resource'] = reverbose(target_resource)
-                        opts['instance'] = target
-                        relation = get_instance(**opts)
+                            'depth': depth + 1
+                            }
+                    relation = get_collection(**opts)
                 else:
-                    # if we have no further loops to do, we'll just put a link to
-                    # the traversal.
-                    if is_collection:
-                        relation = {'meta':
-                                    {'url': target.url(),
-                                     'title': str(instance),
-                                     'methods': t['methods'],
-                                     }
-                                    }
-                    else:
-                        relation = {'meta':
-                                   {'url': str(getattr(target, 'url')),
-                                    'title': str(target),
-                                    'methods': ['GET']
-                                    }
-                                    }
-                result['relations'][target_resource] = relation
-        result['depth left'] = VIEW_TRAVERSE_DEPTH - depth
-        return result
+                    target_instance = getattr(instance, target_resource)
+                    opts = {'resource': reverbose(target_resource),
+                            'instance': target_instance,
+                            'user': user,
+                            'config': config,
+                            'depth': depth + 1
+                            }
+                    relation = get_instance(**opts)
+            else:
+                # if we have no further loops to do, we'll just put a link to
+                # the traversal.
+                target = getattr(instance, target_resource)
+                if is_collection:
+                    relation = {'meta':
+                                {'url': target.url(),
+                                 'title': str(target),
+                                 'methods': t['methods'],
+                                 }
+                                }
+                else:
+                    relation = {'meta':
+                               {'url': str(getattr(target, 'url')),
+                                'title': str(target),
+                                'methods': ['GET']
+                                }
+                                }
+            result['relations'][target_resource] = relation
+    result['depth left'] = VIEW_TRAVERSE_DEPTH - depth
+    return result
 
 
 def post_to_collection(parent=None, parent_id=None, resource=None,
-                       user=None, config=None, request=None):
+                       user=None, request=None):
     # Decision: Do we want to redirect the detail view of the new resource,
     # or to the colleciton in which it lives? I'll opt for the latter.
 
@@ -345,7 +288,7 @@ def post_to_collection(parent=None, parent_id=None, resource=None,
     # Now we're going to extend the set of fields, because most models will need
     # a user, a group and a parent.
     extensions = []
-    
+
     # Someday put this next, ugly chunk of code into a loop, and perhaps figure
     # the values outside this method, in a config somewhere.
 
@@ -434,7 +377,7 @@ def get_post_form(parent=None, parent_id=None,
 
 
 def get_collection(parent=None, parent_id=None, resource=None,
-                   user=None, user_role=None, config=None,
+                   user=None, config=None,
                    depth=0):
     """ Requires a resource with a parent scope (which may be index if provided
         by the url router). Parent must come with an id.
@@ -448,16 +391,16 @@ def get_collection(parent=None, parent_id=None, resource=None,
         All the legal checks are in the handler. Once we recurse we assume
         our configuration is only throwing valid responses.
     """
-    allowed = permit.scope_allows_collection(
-        resource, user_role, config[parent or 'index'])
+    logging.info('getting collection for %s, of parent %s = %s' % (resource, parent, config[parent]))
+    allowed = permit.methods_for_traversal(parent or 'index', resource, config)
     if not depth:
         # Since we're already GETting this, no need to offer it to the client
         # again.
         allowed.remove('GET')
 
     this_model = model_for(resource)
-    # We get to use the model's manager directly if it's the root, or if there is a parent
-    # we use the parent's manager.
+    # We get to use the model's manager directly if it's the root,
+    # or if there is a parent we use the parent's manager.
     if parent:
         # And now a bit of magic naming. We expect the verbose name of the resource
         # to be an attribute of the parent model.
@@ -479,12 +422,26 @@ def get_collection(parent=None, parent_id=None, resource=None,
     if parent and not depth:
         result['traversals'] = [{'url': parent_inst.url, 'method': 'GET'}]
     if VIEW_TRAVERSE_DEPTH - depth:
-        # If there's any database clobbering going on, this might be the place.
+        # We don't retrieve collection.all() here. We have to figure:
+
+        # First of all, if 'world' can GET these resources, no filter needed.
+
+        # If 'group' can GET these resource, make sure they're in the group.
+            # OR
+        # If 'owner' can GET these resources, user=owner
+        # First of all, if 'world' cannot GET these resources, then look
+        # only for resources in the user's group and children.
+
+        # If 'group' cannot GET these re
+        q = build_Q_set(user, resource)
         result['objects'] = [get_instance(resource=resource, instance=inst,
                                           parent=parent, parent_id=parent_id,
-                                          user=user, user_role=user_role, config=config,
+                                          user=user,
+                                          config=instance_permissions(
+                                              user, inst),
                                           depth=depth + 1)
                              for inst in collection.all()]
+
     return result
 
 if __name__ == '__main__':

@@ -180,7 +180,7 @@ LOGGING = {
 
 # These are settings for the permits system
 INDEX_OWNER = 'ajames@vashonsd.org'
-INDEX_GROUP = 'visd-group'
+INDEX_GROUP = 'visd-user'
 
 AUTH_USER_MODEL = 'custom_auth.CustomUser'
 

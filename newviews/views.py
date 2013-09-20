@@ -1,82 +1,88 @@
 # from pprint import pformat
+import pprint
+import logging
+
+pp = pprint.PrettyPrinter()
+logger = logging.getLogger(__name__)
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.http import Http404, HttpResponse
-# from django.template import RequestContext
 from django.shortcuts import render
 
-from permits.configs.modifiers import base_config
 from permits import methods as permit
-from helpers import model_for, local_fields_of, valid_traversals, role_for
+from helpers import model_for, valid_traversals, instance_permissions, same_tree
 
 from custom_auth.models import CustomUser, NestedGroup
 
-from resource_configs import RESOURCES
+from badges.resource_configs import RESOURCES
 
 import methods
 
 
 def handler(request, parent=None, parent_id=None,
-            resource=None, resource_id=None, verb=None):
+            resource=None, resource_id=None):
     """Our job is to thoroughly screen the request so we can hand it
     to our methods freely.
     """
+    # Until the day we hook Google's auth into our middleware:
+    request.user = CustomUser.objects.all()[1]
+    logging.info('User: %s, groups: %s' % (str(request.user), str(request.user.memberships.all())))
+    # Are these even in our defined list of resources?
     if resource not in RESOURCES or (parent and parent not in RESOURCES):
         raise Http404
 
+    # Does this parent (if there is one) even exist?
     if parent:
         try:
             parent_inst = model_for(parent).objects.get(pk=parent_id)
         except ObjectDoesNotExist:
             raise Http404
-        
-        parent_p = permissions[parent or 'index']['fields'].get(resource)
-        if not parent_p:
+        # We'll see if the parent and child are even in the same family tree.
+        if not same_tree(request.user, parent_inst):
             raise Http404
+        # We need to see if a) the user is allowed to GET the parent_inst
+        # Important because we will allow the resource to reveal some
+        # information about its parent.
 
-    if resource_id:
-        if not model_for(resource).objects.filter(pk=resource_id).exists():
-            raise Http404
+        conf = instance_permissions(request.user, parent_inst)
+        if not conf[parent]['methods']['GET'] & 1:
+            raise PermissionDenied
+    else:
+        conf = instance_permissions(request.user)
 
-    # The parent scope must allow us to traverse to the resource.
-    # First we must see if the parent's config even includes the resource.
-
-
-    # We need to check if we can traverse in this direction.
-    traversals = valid_traversals(parent or 'index',
-                                  permit.reduce_permissions_dictionary_to(
-                                      user_role, permissions)
-                                  )['many']
+    # Now let's see if we can go from the parent (or index)
+    # to this resource.
+    traversals = valid_traversals(parent or 'index', conf)['many']
     if not resource in traversals:
         raise PermissionDenied
 
     opts = {'resource': resource,
             'user': request.user,
-            'config': permissions,
             'parent': parent,
-            'parent_id': parent_id
+            'parent_id': parent_id,
+            'config': conf
             }
 
-    user = CustomUser.objects.all()[2]
-    user_top_group = user.status_over('visd-guest')
-
-    # We send off for a config conditioned by this group.
-    permissions = base_config(user_top_group)
-
-
     if resource_id:
-        # Now we have to figure out the user's role for this resource.
         try:
-            inst = model_for(resource).object.get(pk=resource_id)
+            inst = model_for(resource).objects.get(pk=resource_id)
         except ObjectDoesNotExist:
             raise Http404
-        user_role = role_for(user, inst)
-
+        if not same_tree(request.user, inst):
+            raise Http404
+        # Time to retrieve the user's permissions for this instance.
+        conf = instance_permissions(request.user, inst)
+        logging.info('config for resource %s: %s' % (resource, conf[resource]))
         # Now we find out of a user in this role can do this method to this instance.
-
+        allowed = permit.allowed_methods_of(conf[resource]['methods'])['allowed']
+        if not request.method in allowed:
+            logger.error('Got resource_id, not allowed from method %s, allowed=%s' %
+                (request.method, allowed))
+            raise PermissionDenied
 
         if request.method == 'GET':
             opts['instance'] = inst
+            opts['config'] = conf
             requested_form = request.GET.get('form')
             # We may be getting a request for a form, for PUTting or DELETEing.
             # If the user couldn't do this method anyway we just ignore the
@@ -95,9 +101,6 @@ def handler(request, parent=None, parent_id=None,
         if request.method == 'DELETE':
             pass 
     else:
-        allowed = traversals[resource]
-        if not request.method in allowed:
-            raise PermissionDenied
         if request.method == 'GET':
             if request.GET.get('form') == 'create':
                 context = methods.get_post_form(**opts)
@@ -110,12 +113,9 @@ def handler(request, parent=None, parent_id=None,
             # We'll either get a redirect or a response containing a new form.
             opts['request'] = request
             post_result = methods.post_to_collection(**opts)
+            # post_result sends a tuple of (True/False, context).
             template = post_result[0] and '%s_in_%s.html' % (resource, parent or 'index')\
                 or\
                 'post_form.html'
             context = post_result[1]       
     return HttpResponse(render(request, template, context), mimetype='text/html')
-
-
-
-    

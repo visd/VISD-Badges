@@ -1,4 +1,4 @@
-from helpers import memoized_property
+from custom.utils import memoized_property
 
 
 class URLmixin(object):

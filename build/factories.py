@@ -40,14 +40,14 @@ class TagFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Tag
 
     user = RandomExistingUser()
-    group = factory.LazyAttribute(lambda t: t.user.groups.all()[0])
+    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
     word = SlugFuzz()
 
 
 class GroupFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = NestedGroup
     
-    name = factory.Iterator(['guest','visd-guest','visd-user','visd-staff','admin','fsd-guest','fsd-staff'])
+    name = factory.Iterator(['visd-guest','visd-user','visd-staff','fsd-guest','fsd-staff','admin'])
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -62,15 +62,36 @@ class UserFactory(factory.django.DjangoModelFactory):
     password = HexFuzz()
 
     @factory.post_generation
+    def add_memberships(self, create, extracted, **kwargs):
+        self.memberships.add(RandomExistingGroup().fuzz())
+
+    @factory.post_generation
+    def add_supergroup(self, create, extracted, **kwargs):
+        self.group = NestedGroup.objects.get(name="admin")
+
+
+class SuperUserFactory(factory.django.DjangoModelFactory):
+    FACTORY_FOR = CustomUser
+
+    first_name = 'Andy'
+    last_name = 'James'
+    email = 'ajames@vashonsd.org'
+    password = HexFuzz()
+
+    @factory.post_generation
     def add_groups(self, create, extracted, **kwargs):
-        self.groups.add(RandomExistingGroup().fuzz())
+        self.memberships.add(NestedGroup.objects.get(name='admin'))
+
+    @factory.post_generation
+    def add_supergroup(self, create, extracted, **kwargs):
+        self.group = NestedGroup.objects.get(name="admin")
 
 
 class ToolFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Tool
 
     user = RandomExistingUser()
-    group = factory.LazyAttribute(lambda t: t.user.groups.all()[0])
+    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
     title = SlugFuzz()
     url_link = "http://www.example.com"
     url_title = factory.LazyAttribute(
@@ -82,7 +103,7 @@ class SkillsetFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Skillset
 
     user = RandomExistingUser()
-    group = factory.LazyAttribute(lambda t: t.user.groups.all()[0])
+    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
     title = FishFuzz(1, 3)
     short_description = factory.LazyAttribute(
         lambda t: "%s gets to have a short description." % t.title)
@@ -95,7 +116,7 @@ class ChallengeFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Challenge
 
     user = RandomExistingUser()
-    group = factory.LazyAttribute(lambda t: t.user.groups.all()[0])
+    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
     skillset = factory.SubFactory(SkillsetFactory)
     title = factory.LazyAttributeSequence(
         lambda t, n: "Challenge #%d for %s" % (n, t.skillset))
@@ -110,7 +131,7 @@ class ResourceFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Resource
 
     user = RandomExistingUser()
-    group = factory.LazyAttribute(lambda t: t.user.groups.all()[0])
+    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
     challenge = factory.SubFactory(ChallengeFactory)
     title = factory.LazyAttributeSequence(
         lambda t, n: 'Resource #%03d for %s' % (n, t.challenge))
@@ -124,7 +145,7 @@ class EntryFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Entry
 
     user = RandomExistingUser()
-    group = factory.LazyAttribute(lambda t: t.user.groups.all()[0])
+    group = factory.LazyAttribute(lambda t: t.user.memberships.all()[0])
     title = factory.LazyAttributeSequence(
         lambda t, n: "Entry #%d for %s" % (n, t.challenge))
     caption = "Students used two weeks of filming time to create this sped-up view of a plant's growth."
@@ -146,26 +167,31 @@ def add_groups_to_users():
     log = []
     for user in users:
         group = NestedGroup.objects.order_by('?')[0]
-        user.groups.add(group)
+        user.memberships.add(group)
         results.append(user)
         log.append('%s, added %s' % (str(user), str(group)))
     return [results, '\n'.join(log)]
 
 
-def assign_parents_to_groups(count):
+def assign_parents_and_superuser_to_groups(count=None):
     group_list = [
-        ('guest', 'visd-guest'), ('visd-guest', 'visd-user'), ('visd-user', 'visd-staff'),
-        ('visd-staff', 'admin'), ('admin', ''), ('fsd-guest','fsd-staff'),('fsd-staff','')
+        ('visd-guest', 'visd-user'), ('visd-user', 'visd-staff'),
+        ('visd-staff', 'admin'), ('admin', ''), ('fsd-guest', 'fsd-staff'),
+        ('fsd-staff', 'admin')
     ]
+    su = CustomUser.objects.get(email='ajames@vashonsd.org')
+    count = count or len(group_list)
     results = []
     log = []
     for g, p in group_list[:count]:
+        this_group = NestedGroup.objects.get_or_create(name=g)[0]
+        this_group.user = su
+        log.append('Group %s is owned by superuser %s' % (str(g), str(su)))
         if p:
-            this_group = NestedGroup.objects.get_or_create(name=g)[0]
             this_parent = NestedGroup.objects.get_or_create(name=p)[0]
             this_group.parent = this_parent
-            results.append(this_group)
             log.append('Group %s got a parent group %s' % (g, p))
+        results.append(this_group)
     return [results, '\n'.join(log)]
 
 

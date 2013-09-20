@@ -1,3 +1,4 @@
+import cPickle
 import collections
 import functools
 
@@ -48,3 +49,16 @@ class memoized_property(object):
             return self
         obj.__dict__[self.__name__] = result = self.fget(obj)
         return result
+
+
+class MemoizeMutable:
+    def __init__(self, fn):
+        self.fn = fn
+        self.memo = {}
+
+    def __call__(self, *args, **kwds):
+        str = cPickle.dumps(args, 1)+cPickle.dumps(kwds, 1)
+        if not str in self.memo:
+            self.memo[str] = self.fn(*args, **kwds)
+
+        return self.memo[str]

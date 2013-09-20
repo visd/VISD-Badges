@@ -7,7 +7,7 @@ from django.conf import settings
 
 from .custom_managers import CollectionManager
 from model_mixins import URLmixin
-from helpers import memoized_property
+from custom.utils import memoized_property
 # from auth.models import CustomUser
 
 import django.db.models.options as options
@@ -27,7 +27,7 @@ class Tag(URLmixin, models.Model):
     objects = models.Manager()
 
     @memoized_property
-    def parent(self):
+    def parent_instance(self):
         return None
 
     def __unicode__(self):
@@ -57,7 +57,7 @@ class Tool(URLmixin, models.Model):
     objects = models.Manager()
 
     @memoized_property
-    def parent(self):
+    def parent_instance(self):
         return None
 
     def __unicode__(self):
@@ -86,7 +86,7 @@ class Entry(URLmixin, models.Model):
     challenge = models.ForeignKey('Challenge', related_name='entries')
 
     @memoized_property
-    def parent(self):
+    def parent_instance(self):
         return self.challenge
 
     collection = CollectionManager()
@@ -118,7 +118,7 @@ class Challenge(URLmixin, models.Model):
     objects = models.Manager()
 
     @memoized_property
-    def parent(self):
+    def parent_instance(self):
         return self.skillset
 
     def __unicode__(self):
@@ -149,11 +149,11 @@ class Resource(URLmixin, models.Model):
     objects = models.Manager()
 
     @memoized_property
-    def parent(self):
+    def parent_instance(self):
         return self.challenge
 
     @memoized_property
-    def parent_model(cls):
+    def parent_instance_model(cls):
         return Challenge
 
     def __unicode__(self):
@@ -181,7 +181,7 @@ class Skillset(URLmixin, models.Model):
         return 'Skillset %s' % self.title
 
     @memoized_property
-    def parent(self):
+    def parent_instance(self):
         return None
 
     class Meta:

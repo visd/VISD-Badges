@@ -1,17 +1,9 @@
-import cPickle
+""" Confine this to functions that just smash basic types
+(integers, strings) against each other. Should 'know' nothing
+about what they're working on.
+"""
 
-
-class MemoizeMutable:
-    def __init__(self, fn):
-        self.fn = fn
-        self.memo = {}
-
-    def __call__(self, *args, **kwds):
-        str = cPickle.dumps(args, 1)+cPickle.dumps(kwds, 1)
-        if not str in self.memo:
-            self.memo[str] = self.fn(*args, **kwds)
-
-        return self.memo[str]
+from custom.utils import MemoizeMutable
 
 
 @MemoizeMutable
