@@ -10,14 +10,10 @@ Semantics are adapted from the chown command, so that:
 -x = subtract execute
 +w,-x = add write, subtract execute.
 """
-import collections
-import copy
 
 from group_mods import MODS
 
 from base import BASE_PERMISSIONS
-
-from visd_staff import VISD_STAFF_PERMISSIONS
 
 CONFIG_MAP = {
     'visd-staff': 'visd-staff'
@@ -97,7 +93,7 @@ def base_config(user_group=None):
     group_listed = user_group and CONFIG_MAP.get(user_group) or None
     if group_listed:
         mod_config = MODS[group_listed]
-        new_base = modify_config(BASE_PERMISSIONS,mod_config)
+        new_base = modify_config(BASE_PERMISSIONS,mod_config['values'])
         return new_base
     else:
         return BASE_PERMISSIONS
