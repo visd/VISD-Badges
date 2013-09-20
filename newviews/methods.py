@@ -433,13 +433,19 @@ def get_collection(parent=None, parent_id=None, resource=None,
 
         # If 'group' cannot GET these re
         q = build_Q_set(user, resource)
+        logger.info('q = %s' % str(q))
+        if q:
+            instances = collection.filter(q).all()
+        else:
+            instances = collection.all()
+        logger.info('The query was = %s' % str(instances.query))
         result['objects'] = [get_instance(resource=resource, instance=inst,
                                           parent=parent, parent_id=parent_id,
                                           user=user,
                                           config=instance_permissions(
                                               user, inst),
                                           depth=depth + 1)
-                             for inst in collection.all()]
+                             for inst in instances]
 
     return result
 

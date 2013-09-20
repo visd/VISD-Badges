@@ -224,7 +224,7 @@ class NestedGroupManager(models.Manager):
         return '%s/%s' % (scoped and (parent and ('%s' % parent.url)) or "", self.model._meta.verbose_name_plural)
 
 
-class NestedGroup(models.Model):
+class NestedGroup(models.Model, URLmixin):
     """
     Lord help us, we broke the admin. No going back now, unless we have to.
     """

@@ -1,5 +1,7 @@
 import operator
 
+import logging
+
 from importlib import import_module
 
 from django.db.models import Q
@@ -93,6 +95,7 @@ def build_Q(this_user, user_base_config, these_groups):
     Q object with this tool.
     """
     get_bits = user_base_config['methods']['GET']
+    logging.info('user_base_config = %s' % user_base_config)
     # First, see if the 'world' can GET this.
     # If so, what's with all this complicated stuff?
     needed_groups = []
@@ -119,14 +122,14 @@ def build_Q_set(this_user, resource):
                       base_config(g)[resource],
                       this_user.memberships.children_and_self_of(g))
                      )
+    logging.info('q_list = %s' % q_list)
     f = zip(*q_list)
-    groups = []
-    for group_list in f[0]:
-        groups.extend(group_list)
-    filters = [Q(group__in=groups)]
-    if f[1]:
+    logging.info('f = %s' % f)
+    groups = f[0][0]
+    filters = groups and [Q(group__in=groups)] or []
+    if f[1][0] and resource is not 'users':
         filters.append(Q(user=this_user))
-    return q_list and reduce(operator.or_, filters) or None
+    return filters and reduce(operator.or_, filters) or False
 
 
 def instance_permissions(user, instance=None):

@@ -1,15 +1,8 @@
 {% extends "content.html" %}
 
 {% block mainpage %}
-    {% load partitions %}
-    {% for row in objects|columns:3 %}
-    <div class="row-fluid span12">
-        {% for skillset in row %}
-            <div class="span4">
-                {% include 'fragments/skillset_listing.html' %}
-            </div>
-        {% endfor %}
-    </div>
+    {% include 'fragments/edit_collection.html' %}
+    {% for skillset in objects %}
+            {% include 'fragments/skillset_listing.html' %}
     {% endfor %}
-
 {% endblock %}
