@@ -9,17 +9,34 @@ from group_mods import MODS
 from base import BASE_PERMISSIONS
 import modifiers
 
+from permits import methods
+
 pp = pprint.PrettyPrinter()
 
 
+def _spread_into_roles(d):
+    """Take a fat dictionary and returns three, each one narrowed to
+    a specific role.
+    """
+    return {role:methods.reduce_permissions_dictionary_to(role, d)
+            for role in ('owner','group','world')}
+
+
 def compile_configs():
+    """Uses the modifiers per group to generate new permissions dictionaries
+    and pickle them.
+    """
     new_dict = {'BASE': BASE_PERMISSIONS}
     for mod in MODS:
         new_dict[mod] = modifiers.base_config(mod)
-
+    # Now we have a new fat dictionary for each group.
+    # Let's pickle it:
     pickle.dump(new_dict, open('permits/configs/full.py', 'w'))
+    # Now let's thin it into user_roles:
+    narrow_dicts = {k: _spread_into_roles(v) for k, v in new_dict.items()}
 
-    return pp.pprint(new_dict)
+    pickle.dump(narrow_dicts, open('permits/configs/narrow.py', 'w'))
+    return (pp.pprint(new_dict), pp.pprint(narrow_dicts))
 
 
 def get_configs():
