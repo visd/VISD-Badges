@@ -9,8 +9,9 @@ from django.db.models import Q
 from custom.utils import MemoizeMutable, memoized
 from newviews.utils import _figure_role
 
+from permits.configs.modifiers import full_config, narrow_config
+
 from badges.resource_configs import config_from_verbose
-from permits.configs.modifiers import base_config
 from permits.methods import reduce_permissions_dictionary_to, can
 
 from custom_auth.models import CustomUser, NestedGroup
@@ -112,6 +113,15 @@ def build_Q(this_user, user_base_config, these_groups):
 def build_Q_set(this_user, resource):
     """ Returns all the query filters needed to return only the instance_permissions
     this user is permitted to GET.
+
+    First of all, if 'world' can GET these resources, no filter needed.
+
+    If 'group' can GET these resource, make sure they're in the group.
+        OR
+    If 'owner' can GET these resources, user=owner
+    First of all, if 'world' cannot GET these resources, then look
+    only for resources in the user's group and children.
+
     We need a special case for this one. Users and groups have problems with
     circular relationships.
     """
@@ -119,7 +129,7 @@ def build_Q_set(this_user, resource):
     for g in this_user.memberships.all():
         q_list.append(build_Q(
                       this_user,
-                      base_config(g)[resource],
+                      full_config(g)[resource],
                       this_user.memberships.children_and_self_of(g))
                      )
     logging.info('q_list = %s' % q_list)
@@ -148,5 +158,68 @@ def instance_permissions(user, instance=None):
     else:
         top_group = user.status_over(instance.group)
         user_role = role_for(user, instance)
-    new_config = base_config(top_group.name)
-    return reduce_permissions_dictionary_to(user_role, new_config)
+    return narrow_config(top_group.name)[user_role]
+
+
+def sorted_fields_of(filtered_config):
+    """ Given a set of fields, each one with a permission digit, divide them into
+        traversals and attributes.
+
+        Fields get sorted into 'read' and/or 'write'.
+        Traversals get sorted into 'POST' and/or 'GET'.
+    """
+    result = {'fields': {'read': [], 'write': []}, 'traversals': []}
+    if filtered_config:
+        for k, v in filtered_config.items():
+            # odd-numbered permissions are executable.
+            if v & 1:
+                available = []
+                if v & 2:
+                    available.append('POST')
+                if v & 4:
+                    available.append('GET')
+                result['traversals'].append(
+                    {'url': k, 'methods': available, 'resource': k})
+            else:
+                if v & 4:
+                    result['fields']['read'].append(k)
+                if v & 2:
+                    result['fields']['write'].append(k)
+    return result
+
+
+def viewmap_of(resource_config):
+    """Accepts a dictionary already narrowed to a single digit by user role
+    and limited to one resource. It uses the routines above to build a
+    dehydrated dictionary.
+
+    This method feels inefficient as written. Improvements welcome. Note, however,
+    that it does need to return a dictionary with fields, traversals and methods
+    even if they're all empty.
+    """
+    result = {'fields': {}, 'traversals': [], 'methods': []}
+
+    if resource_config.get('fields'):
+        sorted = sorted_fields_of(resource_config['fields'])
+        result['fields'] = sorted['fields']
+        result['traversals'] = sorted['traversals']
+
+    if resource_config.get('methods'):
+        result['methods'] = (resource_config['methods'])
+    return result
+
+
+# slated for removal.
+# def hydrate(dictionary, instance, method):
+#     """ At a point during the construction of the context, we have a model dictionary
+#     that represents what we want from this instance. Now we want to take that instance
+#     and fill it up with the real information.
+#     """
+#     result = {'fields': {}, 'traversals': []}
+#     if method == 'GET':
+#         for f in dictionary['fields']['read']:
+#             result['fields'][f] = getattr(instance, f)
+#         for t in dictionary['traversals']:
+#             result['traversals'].append(
+#                 {'url': getattr(instance, t['url']).url(), 'method': t['method']})
+#         return result

@@ -3,6 +3,7 @@ Markdown==2.3.1
 PIL==1.1.7
 PyYAML==3.10
 South==0.8.1
+django-crispy-forms==1.4.0
 django-debug-toolbar==0.9.4
 django-discover-runner==1.0
 django-extensions==1.1.1

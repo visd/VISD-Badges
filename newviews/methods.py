@@ -7,130 +7,15 @@ from django.forms.models import modelform_factory
 from django.core.urlresolvers import reverse
 
 from permits import methods as permit
-from badges.resource_configs import deverbose, reverbose
-from view_configs.mods import filter_permissions_for
+from permits.configs.modifiers import full_config, narrow_config
 
-from helpers import model_for, parent_of, db_columns_of, valid_traversals,\
-    instance_permissions, build_Q_set
+from badges.resource_configs import reverbose
+
+import helpers as help
 
 logger = logging.getLogger(__name__)
 
 VIEW_TRAVERSE_DEPTH = 2
-
-
-def access_as(user_id, user_groups, res_owner, res_group):
-    """ Given this user's id, a list of user's groups, and this resource's owner/group,
-    in what role (owner, group, world) should this user view this resource?
-
-    >>>print access_as(11,[2,4,9],34,4)
-    'group'
-
-    >>>print access_as(11,[2,4,9],11,9)
-    'owner'
-
-    >>>print access_as(11,[2,4,9],34,13)
-    'world'
-    """
-    if user_id == res_owner:
-        return 'owner'
-    elif res_group in user_groups:
-        return 'group'
-    else:
-        return 'world'
-
-""" The next two functions use narrow slices of the permissions to generate portions
-of the target dictionaries. In other words, these are the functions that translate
-permissions in to views.
-"""
-
-
-def condition_view(original_dict, modifier):
-    """ Takes a dictionary of permissions and omits the keys in corresponding lists
-        whose key is "omit."
-    """
-    new_dict = {}
-    for key in modifier.keys():
-        if modifier[key].get('omit'):
-            new_dict[key] = {k: original_dict[key][k] for k in original_dict[key].keys()
-                             if k not in modifier[key]['omit']}
-    return new_dict
-
-
-def sorted_fields_of(filtered_config):
-    """ Given a set of fields, each one with a permission digit, divide them into
-        traversals and attributes.
-
-        Fields get sorted into 'read' and/or 'write'.
-        Traversals get sorted into 'POST' and/or 'GET'.
-    """
-    result = {'fields': {'read': [], 'write': []}, 'traversals': []}
-    if filtered_config:
-        for k, v in filtered_config.items():
-            # odd-numbered permissions are executable.
-            if v & 1:
-                available = []
-                if v & 2:
-                    available.append('POST')
-                if v & 4:
-                    available.append('GET')
-                result['traversals'].append(
-                    {'url': k, 'methods': available, 'resource': k})
-            else:
-                if v & 4:
-                    result['fields']['read'].append(k)
-                if v & 2:
-                    result['fields']['write'].append(k)
-    return result
-
-
-def viewmap_of(resource_config):
-    """This accepts a dictionary already narrowed to a single digit by user role
-    and limited to one resource. It uses the routines above to build a
-    dehydrated dictionary.
-
-    This method feels inefficient as written. Improvements welcome. Note, however,
-    that it does need to return a dictionary with fields, traversals and methods
-    even if they're all empty.
-    """
-    result = {'fields': {}, 'traversals': [], 'methods': []}
-
-    if resource_config.get('fields'):
-        sorted = sorted_fields_of(resource_config['fields'])
-        result['fields'] = sorted['fields']
-        result['traversals'] = sorted['traversals']
-
-    if resource_config.get('methods'):
-        result['methods'] = (resource_config['methods'])
-    return result
-
-
-def viewmaps_of(resource, depth):
-    """ Slated for removal.
-    """
-    return dict([(level, viewmap_of(resource, level)) for level in ['owner', 'group', 'world']])
-
-
-def hydrate(dictionary, instance, method):
-    """ At a point during the construction of the context, we have a model dictionary
-    that represents what we want from this instance. Now we want to take that instance
-    and fill it up with the real information.
-
-    Think of this as a sort of inner equivalent of a Django model instantiating itself
-    from the database. Or think of the diner's ticket finally reaching the chef, who
-    proceeds to cook the meal.
-
-    First we'll lay out a dictionary of fields and traversals, then use the
-
-    "method" is http method.
-    """
-    result = {'fields': {}, 'traversals': []}
-    if method == 'GET':
-        for f in dictionary['fields']['read']:
-            result['fields'][f] = getattr(instance, f)
-        for t in dictionary['traversals']:
-            result['traversals'].append(
-                {'url': getattr(instance, t['url']).url(), 'method': t['method']})
-        return result
 
 
 def put_instance(resource=None, resource_id=None,
@@ -146,12 +31,6 @@ def delete_instance(resource=None, resource_id=None):
     """ You heard the nice man, delete it. Clean up after it, too.
     """
     pass
-
-
-def manager_from(parent, parent_id, resource):
-    """ A convenience; returns the parent's related manager for this resource.
-    """
-    return getattr(model_for(parent).objects.get(pk=parent_id), resource)
 
 
 def get_instance(parent=None, parent_id=None,
@@ -187,7 +66,7 @@ def get_instance(parent=None, parent_id=None,
     parent_url = parent and '/%s/%s' % (parent, parent_id) or ''
 
     # We now remake the config from the user.
-    config = instance_permissions(user, instance)
+    config = help.instance_permissions(user, instance)
     result['meta'] = {'url': '%s%s' % (parent_url, instance.url),
                       'methods': allowed,
                       'tagged_with': [resource],
@@ -195,7 +74,7 @@ def get_instance(parent=None, parent_id=None,
 
     # Now we sort the config into the kind of dictionary we are looking
     # for:
-    viewmap = viewmap_of(config[resource])
+    viewmap = help.viewmap_of(config[resource])
 
     # And now, the "I'd like to thank my parents" clause.
     # There are two reasons why we might stuff a link to the parent in this dictionary.
@@ -215,7 +94,7 @@ def get_instance(parent=None, parent_id=None,
     result['fields'] = {f: getattr(instance, f) for f in viewmap['fields']['read']}
     # Now we add the traversables and, if we have more to go, fire off a
     # call for each one:
-    forward = valid_traversals(resource, config)
+    forward = help.valid_traversals(resource, config)
     for t in viewmap['traversals']:
         if 'GET' in t['methods']:
             target_resource = t['resource']
@@ -263,23 +142,14 @@ def get_instance(parent=None, parent_id=None,
 
 
 def post_to_collection(parent=None, parent_id=None, resource=None,
+                       config=None, parent_instance=None,
                        user=None, request=None):
-    # Decision: Do we want to redirect the detail view of the new resource,
-    # or to the colleciton in which it lives? I'll opt for the latter.
-
-    # We'll resolve the user's status later. For now we'll just say it's 'group',
-    # with the special config of a member of 'visd-group.'
-
-    user_role = 'group'
-
-    new_config = permit.reduce_permissions_dictionary_to(
-        user_role, config[resource])
-    this_model = model_for(resource)
-    db_columns = db_columns_of(this_model)
+    this_model = help.model_for(resource)
+    db_columns = help.db_columns_of(this_model)
     # We use this, and the config, to find out which fields on the model this user is
     # permitted to create.
     # Whatever was submitted in the request.POST gets filtered through this.
-    write_fields = sorted_fields_of(new_config['fields'])['fields']['write']
+    write_fields = help.help.sorted_fields_of(config['fields'])['fields']['write']
     permitted_fields = list(set(request.POST) &
                             set(write_fields) &
                             set(db_columns))
@@ -293,18 +163,23 @@ def post_to_collection(parent=None, parent_id=None, resource=None,
     # the values outside this method, in a config somewhere.
 
     if 'user_id' in db_columns:
-        values['user_id'] = 1
+        values['user_id'] = user.pk
         extensions.append('user_id')
     if 'group_id' in db_columns:
-        values['group_id'] = 1
+        values['group_id'] = user.status_over(
+            parent and getattr(parent_instance, 'group')
+            or
+            NestedGroup.objects.get(name=settings.INDEX_GROUP))
         extensions.append('group_id')
 
     # If this new resource needs a parent, let's use the one in the URL.
     # This is assuming we've screened for validity -- we won't get here
     # without all our sanity checks in place.
-    if parent_of(resource):
-        values["%s_id" % parent_of(resource)] = parent_id
-        extensions.append("%s_id" % parent_of(resource))
+    p = help.parent_of(resource)
+    if p:
+        pid = "%s_id" % p
+        values[pid] = parent_id
+        extensions.append(pid)
 
     permitted_fields.extend(extensions)
 
@@ -354,13 +229,13 @@ def get_post_form(parent=None, parent_id=None,
         # The user is going to be the owner of this resource.
         this_config = permit.reduce_permissions_dictionary_to('owner', config)
 
-        formfields = sorted_fields_of(
+        formfields = help.sorted_fields_of(
             this_config[resource]['fields'])['fields']
         # We only want a form for the fields the owner can read and write.
         userfields = tuple(set(formfields['read']) & set(formfields['write']))
 
         # Now we create the form.
-        this_model = model_for(resource)
+        this_model = help.model_for(resource)
         form = modelform_factory(this_model, fields=userfields)()
 
     result = {
@@ -397,20 +272,21 @@ def get_collection(parent=None, parent_id=None, resource=None,
         # again.
         allowed.remove('GET')
 
-    this_model = model_for(resource)
+    this_model = help.model_for(resource)
     # We get to use the model's manager directly if it's the root,
     # or if there is a parent we use the parent's manager.
     if parent:
         # And now a bit of magic naming. We expect the verbose name of the resource
         # to be an attribute of the parent model.
-        parent_model = model_for(parent)
+        parent_model = help.model_for(parent)
         parent_inst = parent_model.objects.get(pk=parent_id)
         collection = getattr(parent_inst, resource)
     else:
         collection = this_model.collection
 
-    # The following count will only be accurate when we filter collections by
-    # owner/group.`
+    # Now we need our query filter.
+    q = help.build_Q_set(user, resource)
+
     result = {'meta': {
         'resource': resource,
         'url': collection.url(),
@@ -422,17 +298,6 @@ def get_collection(parent=None, parent_id=None, resource=None,
         result['traversals'] = [{'url': parent_inst.url, 'method': 'GET'}]
     if VIEW_TRAVERSE_DEPTH - depth:
         # We don't retrieve collection.all() here. We have to figure:
-
-        # First of all, if 'world' can GET these resources, no filter needed.
-
-        # If 'group' can GET these resource, make sure they're in the group.
-            # OR
-        # If 'owner' can GET these resources, user=owner
-        # First of all, if 'world' cannot GET these resources, then look
-        # only for resources in the user's group and children.
-
-        # If 'group' cannot GET these re
-        q = build_Q_set(user, resource)
         logger.info('q = %s' % str(q))
         if q:
             instances = collection.filter(q).all()
@@ -442,7 +307,7 @@ def get_collection(parent=None, parent_id=None, resource=None,
         result['objects'] = [get_instance(resource=resource, instance=inst,
                                           parent=parent, parent_id=parent_id,
                                           user=user,
-                                          config=instance_permissions(
+                                          config=help.instance_permissions(
                                               user, inst),
                                           depth=depth + 1)
                              for inst in instances]
