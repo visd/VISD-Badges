@@ -17,19 +17,6 @@ TEST_DICT = {'skillsets': {
 }}
 
 
-def get_child_groups(group):
-    """ Ladies and gentlemen, the dumbest way in history to maintain this information.
-
-    But someday I'll eat my vitamins and implement an rb-tree or something.
-    """
-    return {
-        'admin': ['visd-staff', 'visd-user', 'visd-guest', 'guest'],
-        'visd-staff': ['visd-user', 'visd-guest', 'guest'],
-        'visd-user': ['visd-guest', 'guest'],
-        'visd-guest': ['guest'],
-        'guest': []
-    }[group]
-
 """ These next two methods can probably be made more effecient, which
 would help at runtime.
 """
@@ -88,7 +75,7 @@ def methods_for_traversal(from_resource, to_resource, narrowed_config):
         methods.append('GET')
     if t & 2:
         methods.append('POST')
-    return methods 
+    return methods
 
 
 def permissions_digit_for(type, pcode):
@@ -102,12 +89,6 @@ def permissions_digit_for(type, pcode):
     6
     """
     return int(dict(zip(['owner', 'group', 'world'], list(pcode[1:])))[type])
-    # result = {
-    #     'world': lambda x: x[-1],
-    #     'group': lambda x: x[-2],
-    #     'owner': lambda x: x[-3]
-    # }[type](pcode)
-    # return int(result)
 
 
 def can_via(resource, method, access_level, parent_permissions):
@@ -186,42 +167,6 @@ def scope_allows_instance(user_type, permissions):
         if pdigit & 1:
             results.append(m)
     return results
-
-
-def fields_permitted_to(user_type, method, resource):
-    """ Scans the attributes of the resource and returns a list of the ones 
-    available to this user.
-
-    User types: ['owner','group','world'].
-    Methods: ['read','write','execute']
-    Resource: Whichever.
-
-    This comes after an initial check for access to the resource.
-    """
-    field_permissions = config_of(resource)['fields']
-    return permitted_set(field_permissions, user_type, method)
-
-
-# def can_traverse(d):
-#     """ Pass in a shallow dictionary of fields, along with their permission codes.
-#     Returns which ones the users can traverse. This is to control the
-#     nested retrieval of resources. It doesn't determine which ones the client
-#     sees as available. It's possible to recurse through resources via a collection
-#     the user cannot GET directly
-
-#     >>> print can_traverse({'foo':7,'bar':0,'baz':1})
-#     ['foo','baz']
-#     """
-#     return [k for k, v in d.iteritems() if v & 1]
-
-
-# def class_permitted_to(user_type,method,resource):
-#     """ We want to know if the user has access of this type to the resource in general.
-
-#     Returns Boolean.
-#     """
-#     resource_permissions = config_of(resource)['permissions']['class']
-#     return can(user_type,method,resource_permissions)
 
 
 if __name__ == '__main__':

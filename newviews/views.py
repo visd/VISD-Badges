@@ -40,8 +40,8 @@ def handler(request, parent=None, parent_id=None,
         # We'll see if the parent and child are even in the same family tree.
         if not same_tree(request.user, parent_inst):
             raise Http404
-        # We need to see if a) the user is allowed to GET the parent_inst
-        # Important because we will allow the resource to reveal some
+        # We need to see if the user is allowed to GET the parent_inst
+        # because we will allow the resource to reveal some
         # information about its parent.
 
         conf = instance_permissions(request.user, parent_inst)
@@ -112,6 +112,7 @@ def handler(request, parent=None, parent_id=None,
         if request.method == 'POST':
             # We'll either get a redirect or a response containing a new form.
             opts['request'] = request
+            opts['parent_instance'] = parent and parent_inst or None
             post_result = methods.post_to_collection(**opts)
             # post_result sends a tuple of (True/False, context).
             template = post_result[0] and '%s_in_%s.html' % (resource, parent or 'index')\
