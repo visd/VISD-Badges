@@ -80,19 +80,6 @@ class ViewMethodTestCases(TestCase):
 
         self.instance = ChallengeFactory.create()
 
-
-    def test_condition_view_removes_fields(self):
-        self.modified = methods.condition_view(self.fullConfig,self.modifier)
-        self.assertIn('bar',self.modified['fields'])
-        self.assertIn('GET',self.modified['methods'])
-        self.assertNotIn('foo',self.modified['fields'])
-        self.assertNotIn('PUT',self.modified['methods'])
-        print '\n'
-        print 'Conditioning View Removes Fields'
-        print "Original config: %s" % self.fullConfig
-        print "Modifier: %s" % self.modifier
-        print "Result: %s" % self.modified
-
     def test_sorted_fields_of(self):
         self.sorted_config = methods.sorted_fields_of(self.narrowedConfig['fields'])
         print "\n"

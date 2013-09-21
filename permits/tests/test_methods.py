@@ -3,6 +3,9 @@ import pprint
 from django.test import TestCase
 
 from permits import methods as permit
+from permits.configs import compile
+
+from custom import dictdiffer as differ
 
 pp = pprint.PrettyPrinter()
 
@@ -44,11 +47,17 @@ class PermitMethodTestCases(TestCase):
             'methods': {
                 'omit': ['PUT']
             }
-        }
+        },
+        self.new_perms = {
+                'skillsets': {
+                    'fields': {'locked': '+rwx'},
+                    'methods': {'PUT': '+rx'}}}
+
         self.testDict = {
             'skillsets': {
                 'fields':
             {'title': '0660',
+             'locked': '0000',
              'short_description': '0660',
              'long_description': '0640',
              'challenges': '0755'
@@ -104,3 +113,10 @@ class PermitMethodTestCases(TestCase):
         print 'Result of testing methods for traversal: %s' % str(methods)
         self.assertIn('GET', methods)
         self.assertIn('POST', methods)
+
+    def test_compile_changes_config(self):
+        new_dict = compile.modify_config(self.testDict, self.new_perms)
+        diff = differ.diff(new_dict, self.testDict)
+        print '\n'
+        print 'Changes in modified config: %s' % str(list(diff))
+        self.assertNotEqual(diff, [])

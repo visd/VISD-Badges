@@ -12,6 +12,7 @@ from permits.configs.modifiers import full_config, narrow_config
 from badges.resource_configs import reverbose
 
 import helpers as help
+from utils import and_list
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +28,35 @@ def put_instance(resource=None, resource_id=None,
     pass
 
 
-def delete_instance(resource=None, resource_id=None):
-    """ You heard the nice man, delete it. Clean up after it, too.
+def get_delete_form(instance, warning=None):
+    """ Right away, a button for delete/cancel.
+    Then, on clicking the form, perhaps a warning.
     """
-    pass
+    return {'target': {
+        'url': instance.url,
+        'method': 'DELETE',
+        'form': form
+    }}
+
+
+def delete_instance(instance=None, confirm=False):
+    """ We'll use the handler to look for a querystring of ?confirm=True.
+    We'll also use the delete form to prepare the user for the delete that's
+    to come. The user will, on confirming, click on a button that sends
+    the all_clear.
+    """
+    if not confirm:
+        child_resources = [rel.get_accessor_name()
+                           for rel in instance._meta.get_all_related_objects()]
+        if child_resources:
+            child_warnings = and_list(child_resources)
+            return 'Delete this and all its %s?' % child_warnings
+            # Resend a delete form with an alert with a button
+            # that links to [:url]?confirm=True DELETE
+        else:
+            return "Nobody depends on you -- off you go!"
+    return "I'll delete you!"
+    # instance.delete()
 
 
 def get_instance(parent=None, parent_id=None,
@@ -149,7 +175,8 @@ def post_to_collection(parent=None, parent_id=None, resource=None,
     # We use this, and the config, to find out which fields on the model this user is
     # permitted to create.
     # Whatever was submitted in the request.POST gets filtered through this.
-    write_fields = help.help.sorted_fields_of(config['fields'])['fields']['write']
+    write_fields = help.help.sorted_fields_of(
+        config['fields'])['fields']['write']
     permitted_fields = list(set(request.POST) &
                             set(write_fields) &
                             set(db_columns))

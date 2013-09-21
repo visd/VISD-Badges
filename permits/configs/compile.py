@@ -105,14 +105,16 @@ def modify_config(old_config, modifier):
 
 
 def mod_config(user_group=None):
-    """ If we recognize this group, then we'll send out a new modified version of BASE_PERMISSIONS.
+    """ If we recognize this group, then we'll send out a new modified version
+    of BASE_PERMISSIONS.
 
     Otherwise, you'll just get BASE_PERMISSIONS.
     """
     if user_group:
         modify_dict = MODS[user_group]
+        print 'modify_dict for user_group %s: %s' % (user_group, modify_dict)
         pre = modify_dict.get('inherits')
-        new_base = modify_config(pre and mod_config(pre) or BASE_PERMISSIONS,
+        new_base = modify_config(pre and mod_config(user_group=pre) or BASE_PERMISSIONS,
                                  modify_dict['values'])
         return new_base
     else:
@@ -133,7 +135,7 @@ def compile_configs():
     narrow_dicts = {k: _spread_into_roles(v) for k, v in new_dict.items()}
 
     pickle.dump(narrow_dicts, open('permits/configs/narrow.py', 'w'))
-    return (pp.pprint(new_dict), pp.pprint(narrow_dicts))
+    return (new_dict, narrow_dicts)
 
 
 def get_full_configs():
@@ -151,7 +153,15 @@ def _get_diffs(first, second=None):
 
 
 def diffs(first, second=None):
+    if first not in FULL_PERMISSIONS:
+        return None 
     second = second or 'BASE'
-    result = ['%s: %s=>%s' % (field, values[0], values[1])
-              for change, field, values in _get_diffs(first, second)]
-    return '\n'.join(result)
+    return _get_diffs(first, second)
+
+
+def print_diffs(first, second=None):
+    result = diffs(first, second)
+    if result:
+        return '\n'.join(['%s: %s=>%s' % (field, values[0], values[1])
+                          for change, field, values
+                          in diffs(first, second)])

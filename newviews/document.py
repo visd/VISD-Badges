@@ -2,22 +2,25 @@
 
 Preferred text format is Markdown.
 """
-from permits.configs.modifiers import base_config
-from permits import methods as permit
+from permits.configs.modifiers import full_config, narrow_config
 from newviews import methods as vmethods
+from newviews import helpers
 
 from badges import resource_configs
 
 from settings import PROJECT_ROOT
 from os import path
 
+
 def api_for(user_role, group=None):
-    config = permit.reduce_permissions_dictionary_to(user_role, base_config(group))
+    config = narrow_config(group)[user_role]
     return {user_role: api_dict(config=config)}
+
 
 def meta_for(resource):
     description = resource_configs.config_from_verbose(resource).get('description')
-    return {'description':description or ''}
+    return {'description': description or ''}
+
 
 def markdown_api(user_role, group=None, filename='api'):
     filename = '_'.join([filename,user_role])
@@ -48,20 +51,19 @@ def markdown_api(user_role, group=None, filename='api'):
     f.close()
     return final_text
 
+
 def convert_to_viewmaps(config):
     """ Accepts a config file, pre-narrowed to user_role.
     Returns a dictionary in which each resource has beeen expanded into a viewmap.
     """
-    return {k:vmethods.viewmap_of(v) for k,v in config.items()}
+    return {k:helpers.viewmap_of(v) for k,v in config.items()}
 
-def api_dict(config):
-    """Accepts a config file, pre-narrowed to user_role. Returns a dictionary that can be expanded
-    into a readable api.
+
+def _per_resource(resource, res_config):
+    """Config is already scoped to just this resource.
+    Returns a dictionary fragment.
     """
-    result = {res:{'meta':meta_for(res),'urls':[]} for res in config.keys() if res is not 'index'}
-    viewmaps = convert_to_viewmaps(config)
-    for resource, res_config in viewmaps.items():
-        prefix = (resource is not 'index') and ("/%s/:id" % resource) or ''   
+    prefix = (resource is not 'index') and ("/%s/:id" % resource) or ''   
         traversals = res_config.get('traversals')
         # First of all, the forward links from here. We're going to make an entry for each in
         # the forward resource's 'urls' key.
@@ -90,5 +92,15 @@ def api_dict(config):
                 if m == 'PUT':
                     url_dict['fields']=res_config['fields']['write']
                 result[resource]['urls'].append(url_dict)
+
+
+def api_dict(config):
+    """Accepts a config file, pre-narrowed to user_role. Returns a dictionary that can be expanded
+    into a readable api.
+    """
+    result = {res:{'meta':meta_for(res),'urls':[]} for res in config if res is not 'index'}
+    viewmaps = convert_to_viewmaps(config)
+    for resource, res_config in viewmaps.items():
+        
     return result
 

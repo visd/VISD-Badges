@@ -32,3 +32,9 @@ def _figure_role(inst_creds, user_id, user_memberships):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+
+
+def and_list(items):
+    if len(items) <= 2:
+        return " and ".join(items)
+    return ", ".join(items[:-1]) + " and " + items[-1]

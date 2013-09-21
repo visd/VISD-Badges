@@ -1,5 +1,6 @@
 MODS = {'admin': {'inherits': 'visd-staff',
-                  'values': {'users': {'group': '+w'}}},
+                  'values': {'users': {'fields': {'group': '+w'},
+                                       'methods': {'DELETE': '+rx'}}}},
         'visd-staff': {'values': {'skillsets': {'fields': {'title': '+w',
                                                            'short_description': '+w',
                                                            'long_description': '+w',

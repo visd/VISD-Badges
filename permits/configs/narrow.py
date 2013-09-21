@@ -70,10 +70,10 @@ ssg18
 S'PUT'
 p30
 I7
+sg20
+I5
 sS'DELETE'
 p31
-I5
-sg20
 I5
 sssg11
 (dp32
@@ -357,9 +357,9 @@ ssg18
 (dp85
 g30
 I0
-sg31
-I0
 sg20
+I0
+sg31
 I0
 sssg11
 (dp86
@@ -609,7 +609,7 @@ I6
 sg25
 I6
 sg26
-I0
+I2
 sg27
 I0
 sg15
@@ -620,9 +620,9 @@ ssg18
 (dp116
 g30
 I7
-sg31
-I5
 sg20
+I5
+sg31
 I5
 sssg11
 (dp117
