@@ -30,12 +30,12 @@ class PermitMethodTestCases(TestCase):
 
         self.fullConfig = {
             'fields': {
-                'foo': '0640',
-                'bar': '0755'
+                'foo': '-640',
+                'bar': 'm755'
             },
             'methods': {
-                'GET': '0555',
-                'PUT': '0700'
+                'GET': '-555',
+                'PUT': '-700'
             }
         }
 
@@ -56,16 +56,16 @@ class PermitMethodTestCases(TestCase):
         self.testDict = {
             'skillsets': {
                 'fields':
-            {'title': '0660',
-             'locked': '0000',
-             'short_description': '0660',
-             'long_description': '0640',
-             'challenges': '0755'
+            {'title': '-660',
+             'locked': '-000',
+             'short_description': '-660',
+             'long_description': '-640',
+             'challenges': 'm755'
              },
                 'methods': {
-                    'PUT': '0500',
-                    'GET': '0555',
-                    'DELETE': '0500'
+                    'PUT': '-500',
+                    'GET': '-555',
+                    'DELETE': '-500'
                 }
             }
         }
@@ -113,6 +113,11 @@ class PermitMethodTestCases(TestCase):
         print 'Result of testing methods for traversal: %s' % str(methods)
         self.assertIn('GET', methods)
         self.assertIn('POST', methods)
+
+    def test_traversal_bits(self):
+        reduced = permit.traversal_bits(self.testDict)
+        print self.assertEqual(reduced['skillsets']['fields']['challenges'], 'm')
+        print self.assertEqual(reduced['skillsets']['fields']['title'], '-')
 
     def test_compile_changes_config(self):
         new_dict = compile.modify_config(self.testDict, self.new_perms)

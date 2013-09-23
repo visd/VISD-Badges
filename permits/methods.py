@@ -9,7 +9,7 @@ TEST_DICT = {'skillsets': {
              # 'group': '0600',
              'slug': '0400',
              'created_at': '0000',
-             'challenges': '0755'},
+             'challenges': 'm755'},
     'methods':
             {'PUT': '0500',
              'GET': '0555',
@@ -91,6 +91,12 @@ def permissions_digit_for(type, pcode):
     return int(dict(zip(['owner', 'group', 'world'], list(pcode[1:])))[type])
 
 
+def traversal_code(pcode):
+    """ Pulls the 'm' out of 'm460' and so on. Probably more text than it's worth!
+    """
+    return pcode[0]
+
+
 def can_via(resource, method, access_level, parent_permissions):
     # Accepts the permissions portion of a parent, which must be specified in
     # the calling function.
@@ -126,6 +132,18 @@ def reduce_permissions_dictionary_to(user_type, dictionary):
             new_dict[k] = reduce_permissions_dictionary_to(user_type, v)
         else:
             new_dict[k] = permissions_digit_for(user_type, v)
+    return new_dict
+
+
+def traversal_bits(dictionary):
+    """ Identical to above, only returns the traversal bit.
+    """
+    new_dict = {}
+    for k, v in dictionary.items():
+        if hasattr(v, '__iter__'):
+            new_dict[k] = traversal_bits(v)
+        else:
+            new_dict[k] = v[0]
     return new_dict
 
 
