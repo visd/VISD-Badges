@@ -1,21 +1,6 @@
+from collections import defaultdict
+
 from configs.base import BASE_PERMISSIONS as PERMISSIONS
-
-TEST_DICT = {'skillsets': {
-    'fields':
-            {'title': '0640',
-             'short_description': '0640',
-             'long_description': '0640',
-             # 'owner': '0640',
-             # 'group': '0600',
-             'slug': '0400',
-             'created_at': '0000',
-             'challenges': 'm755'},
-    'methods':
-            {'PUT': '0500',
-             'GET': '0555',
-             'DELETE': '0500'}
-}}
-
 
 """ These next two methods can probably be made more effecient, which
 would help at runtime.
@@ -62,6 +47,22 @@ def allowed_methods_of(method_dict):
             if code & 4:
                 result['offered'].append(method)
     return result
+
+
+def _sorted_traversals(trav_config, user_config):
+    """ Made neutral for dependency injection. Use a wrapper
+    function to taper the dictionaries down so we are looking
+    at the 'fields' of the same resource in both.
+
+    Returns a list of traversals (as identified by trav_config)
+    which the user_config says the user can execute.
+    """
+    new_dict = defaultdict(list)
+    terms = {'o': 'one', 'p': 'parent', 'm': 'many'}
+    for k, v in trav_config.items():
+        if v in terms and user_config.get(k, 0) & 1:
+            new_dict[terms[v]].append(k)
+    return dict(new_dict)
 
 
 def methods_for_traversal(from_resource, to_resource, narrowed_config):

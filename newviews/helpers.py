@@ -10,9 +10,10 @@ from custom.utils import MemoizeMutable, memoized
 from newviews.utils import _figure_role
 
 from permits.configs.modifiers import full_config, narrow_config
+from permits import TRAVERSAL_PERMISSIONS
 
 from badges.resource_configs import config_from_verbose
-from permits.methods import reduce_permissions_dictionary_to, can
+from permits.methods import reduce_permissions_dictionary_to, can, _sorted_traversals
 
 from custom_auth.models import CustomUser, NestedGroup
 
@@ -61,6 +62,22 @@ def role_for(user, instance):
         user.id,
         user.all_group_ids
     )
+
+
+def sorted_traversals(resource=None, config=None):
+    """ A resource to look up, and a pre-narrowed config.
+
+    We'll go get the traversal permissions, scope both configs,
+    and send them off to the be sorted. The result will have
+    the valid traversals for this user sorted into 'one', 'many'
+    and 'parent'.
+    """
+
+    return _sorted_traversals(
+        TRAVERSAL_PERMISSIONS[resource]['fields'],
+        config[resource]['fields']
+        )
+
 
 
 def valid_traversals(from_res, config):

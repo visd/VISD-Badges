@@ -13,7 +13,7 @@ BASE_PERMISSIONS = {
         'methods': {
             'GET': '-444'
         }
-    ,
+    },
     'skillsets':{
         'fields':{
             'user': 'o500',
@@ -162,5 +162,4 @@ BASE_PERMISSIONS = {
             'DELETE': '-000'
         }
     }
-}
 }

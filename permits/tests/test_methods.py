@@ -28,6 +28,17 @@ class PermitMethodTestCases(TestCase):
             }
         }
 
+        self.traversalConfig = {
+            'wat': {
+                'fields': {
+                    'foo': '-',
+                    'bar': 'p',
+                    'baz': 'm',
+                    'toot': 'o'
+                }
+            }
+        }
+
         self.fullConfig = {
             'fields': {
                 'foo': '-640',
@@ -125,3 +136,14 @@ class PermitMethodTestCases(TestCase):
         print '\n'
         print 'Changes in modified config: %s' % str(list(diff))
         self.assertNotEqual(diff, [])
+
+    def test_sorting_of_traversals(self):
+        user_dict = self.narrowedConfig['wat']['fields']
+        trav_dict = self.traversalConfig['wat']['fields']
+        print '\n'
+        print 'Sorts traversals the user is allowed to execute.'
+        print 'User dictionary: %s' % user_dict
+        print 'Traversal dictionary: %s' % trav_dict
+        sorted_traversals = permit._sorted_traversals(trav_dict, user_dict)
+        print sorted_traversals
+        self.assertIn('baz', sorted_traversals['many'])
