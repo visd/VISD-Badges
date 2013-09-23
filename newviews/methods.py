@@ -100,7 +100,7 @@ def get_instance(parent=None, parent_id=None,
 
     # Now we sort the config into the kind of dictionary we are looking
     # for:
-    viewmap = help.viewmap_of(config[resource])
+    viewmap = help.viewmap_of(resource, config)
 
     # And now, the "I'd like to thank my parents" clause.
     # There are two reasons why we might stuff a link to the parent in this dictionary.
