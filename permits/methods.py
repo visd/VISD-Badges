@@ -6,6 +6,7 @@ from configs.base import BASE_PERMISSIONS as PERMISSIONS
 would help at runtime.
 """
 
+TRAVERSAL_CODES = {'o': 'one', 'p': 'parent', 'm': 'many'}
 
 def can(whom, method, pcode):
     """Accepts a user type, a method and the string version of an octal
@@ -58,10 +59,9 @@ def _sorted_traversals(trav_config, user_config):
     which the user_config says the user can execute.
     """
     new_dict = defaultdict(list)
-    terms = {'o': 'one', 'p': 'parent', 'm': 'many'}
     for k, v in trav_config.items():
-        if v in terms and user_config.get(k, 0) & 1:
-            new_dict[terms[v]].append(k)
+        if v in TRAVERSAL_CODES and user_config.get(k, 0) & 1:
+            new_dict[TRAVERSAL_CODES[v]].append(k)
     return dict(new_dict)
 
 

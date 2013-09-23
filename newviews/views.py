@@ -10,7 +10,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import render
 
 from permits import methods as permit
-from helpers import model_for, valid_traversals, instance_permissions, same_tree
+from helpers import model_for, sorted_traversals, instance_permissions, same_tree
 
 from custom_auth.models import CustomUser, NestedGroup
 
@@ -52,8 +52,8 @@ def handler(request, parent=None, parent_id=None,
 
     # Now let's see if we can go from the parent (or index)
     # to this resource.
-    traversals = valid_traversals(parent or 'index', conf)['many']
-    if not resource in traversals:
+    traversals = sorted_traversals(resource=(parent or 'index'), config=conf)
+    if not resource in traversals.get('many', []):
         raise PermissionDenied
 
     opts = {'resource': resource,
