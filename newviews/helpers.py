@@ -10,9 +10,11 @@ from custom.utils import MemoizeMutable, memoized
 from newviews.utils import _figure_role
 
 from permits.configs.modifiers import full_config, narrow_config
+from permits import TRAVERSAL_PERMISSIONS
 
 from badges.resource_configs import config_from_verbose
-from permits.methods import reduce_permissions_dictionary_to, can
+from permits.methods import reduce_permissions_dictionary_to, can,\
+_sorted_traversals, TRAVERSAL_CODES
 
 from custom_auth.models import CustomUser, NestedGroup
 
@@ -61,6 +63,22 @@ def role_for(user, instance):
         user.id,
         user.all_group_ids
     )
+
+
+def sorted_traversals(resource=None, config=None):
+    """ A resource to look up, and a pre-narrowed config.
+
+    We'll go get the traversal permissions, scope both configs,
+    and send them off to the be sorted. The result will have
+    the valid traversals for this user sorted into 'one', 'many'
+    and 'parent'.
+    """
+
+    return _sorted_traversals(
+        TRAVERSAL_PERMISSIONS[resource]['fields'],
+        config[resource]['fields']
+        )
+
 
 
 def valid_traversals(from_res, config):
@@ -161,7 +179,7 @@ def instance_permissions(user, instance=None):
     return narrow_config(top_group.name)[user_role]
 
 
-def sorted_fields_of(filtered_config):
+def sorted_fields_of(filtered_config, traversal_fields):
     """ Given a set of fields, each one with a permission digit, divide them into
         traversals and attributes.
 
@@ -169,9 +187,11 @@ def sorted_fields_of(filtered_config):
         Traversals get sorted into 'POST' and/or 'GET'.
     """
     result = {'fields': {'read': [], 'write': []}, 'traversals': []}
-    if filtered_config:
-        for k, v in filtered_config.items():
-            # odd-numbered permissions are executable.
+
+    for k, v in filtered_config.items():
+        # odd-numbered permissions are executable.
+        t_code = traversal_fields.get(k, None)
+        if t_code and t_code[0] in TRAVERSAL_CODES:
             if v & 1:
                 available = []
                 if v & 2:
@@ -180,32 +200,30 @@ def sorted_fields_of(filtered_config):
                     available.append('GET')
                 result['traversals'].append(
                     {'url': k, 'methods': available, 'resource': k})
-            else:
-                if v & 4:
-                    result['fields']['read'].append(k)
-                if v & 2:
-                    result['fields']['write'].append(k)
+        else:
+            if v & 4:
+                result['fields']['read'].append(k)
+            if v & 2:
+                result['fields']['write'].append(k)
     return result
 
 
-def viewmap_of(resource_config):
-    """Accepts a dictionary already narrowed to a single digit by user role
-    and limited to one resource. It uses the routines above to build a
-    dehydrated dictionary.
+def viewmap_of(resource, config):
+    """Accepts a resource and a dictionary already narrowed to a single digit 
+    by user role. It uses the routines above to build a kind of template dictionary.
 
     This method feels inefficient as written. Improvements welcome. Note, however,
     that it does need to return a dictionary with fields, traversals and methods
     even if they're all empty.
     """
     result = {'fields': {}, 'traversals': [], 'methods': []}
-
-    if resource_config.get('fields'):
-        sorted = sorted_fields_of(resource_config['fields'])
-        result['fields'] = sorted['fields']
-        result['traversals'] = sorted['traversals']
-
-    if resource_config.get('methods'):
-        result['methods'] = (resource_config['methods'])
+    conf = config[resource]
+    sorted = sorted_fields_of(
+        conf['fields'],
+        TRAVERSAL_PERMISSIONS[resource]['fields'])
+    result['fields'] = sorted['fields']
+    result['traversals'] = sorted['traversals']
+    result['methods'] = conf['methods']
     return result
 
 

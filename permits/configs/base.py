@@ -1,161 +1,165 @@
 BASE_PERMISSIONS = {
     'index': {
         'fields': {
-            'skillsets': '0755',
-            'challenges': '0711',
-            'entries': '0711',
-            'tags': '0711',
-            'tools': '0755',
-            'events': '0755',
-            'users': '0755',
-            'groups': '0500'
+            'skillsets': 'm755',
+            'challenges': 'm711',
+            'entries': 'm711',
+            'tags': 'm711',
+            'tools': 'm755',
+            'events': 'm755',
+            'users': 'm755',
+            'groups': 'm500'
         },
         'methods': {
-            'GET': '0444'
+            'GET': '-444'
         }
     },
-    'skillsets': {
-        'fields': {
-            'user': '0500',
-            'group': '0700',
-            'title': '0640',
-            'short_description': '0640',
-            'long_description': '0640',
-            'slug': '0400',
-            'created_at': '0000',
-            'challenges': '0755'
+    'skillsets':{
+        'fields':{
+            'user': 'o500',
+            'group': 'o700',
+            'title': '-640',
+            'short_description': '-640',
+            'long_description': '-640',
+            'slug': '-400',
+            'created_at': '-000',
+            'challenges': 'm755'
         },
         'methods': {
-            'PUT': '0500',
-            'GET': '0550',
-            'DELETE': '0500'
+            'PUT': '-500',
+            'GET': '-550',
+            'DELETE': '-500'
         }
     },
     'challenges': {
         'fields': {
-            'user': '0550',
-            'user_id': '0200',
-            'group': '0700',
-            'group_id': '0200',
-            'title': '0640',
-            'short_description': '0640',
-            'long_description': '0640',
-            'slug': '0400',
-            'created_at': '0000',
-            'skillset': '0550',
-            'skillset_id': '0200',
-            'entries': '0755',
-            'resources': '0755',
-            'tags': '0755',
-            'tools': '0755'
+            'user': 'o550',
+            'user_id': '-200',
+            'group': 'o700',
+            'group_id': '-200',
+            'title': '-640',
+            'short_description': '-640',
+            'long_description': '-640',
+            'slug': '-400',
+            'created_at': '-000',
+            'skillset': 'p550',
+            'skillset_id': '-200',
+            'entries': 'm755',
+            'resources': 'm755',
+            'tags': 'm755',
+            'tools': 'm755'
         },
         'methods': {
-            'PUT': '0700',
-            'GET': '0550',
-            'DELETE': '0500'
+            'PUT': '-700',
+            'GET': '-550',
+            'DELETE': '-500'
         }
     },
     'resources': {
         'fields': {
-            'user': '0600',
-            'group': '0600',
-            'title': '0644',
-            'url_link': '0644',
-            'url_title': '0644',
-            'description': '0644',
-            'challenge': '0644',
-            'thumb': '0644',
-            'created_at': '0400',
+            'user': 'o600',
+            'group': 'o600',
+            'title': '-644',
+            'url_link': '-644',
+            'url_title': '-644',
+            'description': '-644',
+            'challenge': 'p644',
+            'thumb': '-644',
+            'created_at': '-400',
         },
         'methods': {
-            'PUT': '0700',
-            'GET': '0555',
-            'DELETE': '0500'
+            'PUT': '-700',
+            'GET': '-555',
+            'DELETE': '-500'
         }
     },
     'entries': {
         'fields': {
-            'user': '0550',
-            'group': '0600',
-            'title': '0644',
-            'caption': '0644',
-            'image': '0644',
-            'url_link': '0644',
-            'url_title': '0644',
-            'created_at': '0444',
-            'challenge': '0550'
+            'user': 'o550',
+            'group': 'o600',
+            'title': '-644',
+            'caption': '-644',
+            'image': '-644',
+            'url_link': '-644',
+            'url_title': '-644',
+            'created_at': '-444',
+            'challenge': 'p550'
         },
         'methods': {
-            'PUT': '0700',
-            'GET': '0555',
-            'DELETE': '0500'
+            'PUT': '-700',
+            'GET': '-555',
+            'DELETE': '-500'
         }
     },
     'tags': {
         'fields': {
-            'word': '0644',
-            'slug': '0000',
-            'created_at': '0000',
-            'challenges': '0555',
-            'entries': '0555',
-            'skillsets': '0555'
+            'user': 'o000',
+            'group': 'o000',
+            'word': '-644',
+            'slug': '-000',
+            'created_at': '-000',
+            'challenges': 'm555',
+            'entries': 'm555',
+            'skillsets': 'm555'
         },
         'methods': {
-            'PUT': '0700',
-            'GET': '0550',
-            'DELETE': '0500'
+            'PUT': '-700',
+            'GET': '-550',
+            'DELETE': '-500'
         }
     },
     'tools': {
         'fields': {
-            'title': '0644',
-            'slug': '0000',
-            'url_link': '0644',
-            'url_title': '0644',
-            'icon': '0644',
-            'created_at': '0000',
-            'challenges': '0555',
-            'entries': '0555'
+            'user': 'o000',
+            'group': 'o000',
+            'title': '-644',
+            'slug': '-000',
+            'url_link': '-644',
+            'url_title': '-644',
+            'icon': '-644',
+            'created_at': '-000',
+            'challenges': 'm555',
+            'entries': 'm555'
         },
         'methods': {
-            'PUT': '0700',
-            'GET': '0555',
-            'DELETE': '0500'
+            'PUT': '-700',
+            'GET': '-555',
+            'DELETE': '-500'
         }
     },
     'events': {
         'fields': {
-            'created': '0400',
-            'modified': '0400',
-            'user': '0440',
-            'tags': '0555'
+            'created': '-400',
+            'modified': '-400',
+            'user': '-440',
+            'tags': '-555'
         }
     },
     'users': {
         'fields': {
-            'user': '0000',
-            'group': '0000',
-            'first_name': '0640',
-            'last_name': '0640',
-            'email': '0640',
-            'memberships': '0550',
-            'entries': '0555'
+            'user': 'o000',
+            'group': 'o000',
+            'first_name': '-640',
+            'last_name': '-640',
+            'email': '-640',
+            'memberships': 'm550',
+            'entries': 'm555'
         },
         'methods': {
-            'PUT': '0700',
-            'GET': '0550',
-            'DELETE': '0500'
+            'PUT': '-700',
+            'GET': '-550',
+            'DELETE': '-500'
         }
     },
     'memberships': {
         'fields': {
-            'name': '0600',
-            'parent': '0000'
+            'name': '-600',
+            'parent': 'o000'
         },
         'methods': {
-            'PUT': '0000',
-            'GET': '0500',
-            'DELETE': '0000'
+            'PUT': '-000',
+            'GET': '-500',
+            'DELETE': '-000'
         }
     }
 }

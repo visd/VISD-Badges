@@ -1,26 +1,12 @@
+from collections import defaultdict
+
 from configs.base import BASE_PERMISSIONS as PERMISSIONS
-
-TEST_DICT = {'skillsets': {
-    'fields':
-            {'title': '0640',
-             'short_description': '0640',
-             'long_description': '0640',
-             # 'owner': '0640',
-             # 'group': '0600',
-             'slug': '0400',
-             'created_at': '0000',
-             'challenges': '0755'},
-    'methods':
-            {'PUT': '0500',
-             'GET': '0555',
-             'DELETE': '0500'}
-}}
-
 
 """ These next two methods can probably be made more effecient, which
 would help at runtime.
 """
 
+TRAVERSAL_CODES = {'o': 'one', 'p': 'parent', 'm': 'many'}
 
 def can(whom, method, pcode):
     """Accepts a user type, a method and the string version of an octal
@@ -64,6 +50,21 @@ def allowed_methods_of(method_dict):
     return result
 
 
+def _sorted_traversals(trav_config, user_config):
+    """ Made neutral for dependency injection. Use a wrapper
+    function to taper the dictionaries down so we are looking
+    at the 'fields' of the same resource in both.
+
+    Returns a list of traversals (as identified by trav_config)
+    which the user_config says the user can execute.
+    """
+    new_dict = defaultdict(list)
+    for k, v in trav_config.items():
+        if v in TRAVERSAL_CODES and user_config.get(k, 0) & 1:
+            new_dict[TRAVERSAL_CODES[v]].append(k)
+    return dict(new_dict)
+
+
 def methods_for_traversal(from_resource, to_resource, narrowed_config):
     """ Accepts a config narrowed to one user_role (world, group, owner).
     Looks up the from_resource, finds to_resource in 'fields' and declares
@@ -89,6 +90,12 @@ def permissions_digit_for(type, pcode):
     6
     """
     return int(dict(zip(['owner', 'group', 'world'], list(pcode[1:])))[type])
+
+
+def traversal_code(pcode):
+    """ Pulls the 'm' out of 'm460' and so on. Probably more text than it's worth!
+    """
+    return pcode[0]
 
 
 def can_via(resource, method, access_level, parent_permissions):
@@ -126,6 +133,18 @@ def reduce_permissions_dictionary_to(user_type, dictionary):
             new_dict[k] = reduce_permissions_dictionary_to(user_type, v)
         else:
             new_dict[k] = permissions_digit_for(user_type, v)
+    return new_dict
+
+
+def traversal_bits(dictionary):
+    """ Identical to above, only returns the traversal bit.
+    """
+    new_dict = {}
+    for k, v in dictionary.items():
+        if hasattr(v, '__iter__'):
+            new_dict[k] = traversal_bits(v)
+        else:
+            new_dict[k] = v[0]
     return new_dict
 
 

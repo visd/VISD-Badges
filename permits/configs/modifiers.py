@@ -13,3 +13,4 @@ def narrow_config(group):
         return NARROW_PERMISSIONS[group]
     else:
         return NARROW_PERMISSIONS['BASE']
+

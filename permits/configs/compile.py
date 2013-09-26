@@ -34,6 +34,7 @@ def _spread_into_roles(d):
     return {role: methods.reduce_permissions_dictionary_to(role, d)
             for role in ('owner', 'group', 'world')}
 
+
 def modify(original, modifier):
     """ Accepts a single-digit original and a modifier string. Returns a string.
 
@@ -77,11 +78,11 @@ def group_of(config):
 
 def replace_group(original_group, modifier):
     """
-    >>> print replace_group('0700','+rwx')
-    0770
+    >>> print replace_group('-700','+rwx')
+    -770
 
-    >>> print replace_group('0520','+r,-w')
-    0540
+    >>> print replace_group('m520','+r,-w')
+    m540
     """
     li = list(original_group)
     li[-2] = modify(li[-2], modifier)
@@ -89,7 +90,8 @@ def replace_group(original_group, modifier):
 
 
 def modify_config(old_config, modifier):
-    """ Walks through two dictionaries comparing them and adding and calling modify() as needed.
+    """ Walks through two dictionaries comparing them and adding
+    and calling modify() as needed.
 
     """
     result = {}
@@ -130,12 +132,15 @@ def compile_configs():
         new_dict[mod] = mod_config(mod)
     # Now we have a new fat dictionary for each group.
     # Let's pickle it:
-    pickle.dump(new_dict, open('permits/configs/full.py', 'w'))
+    with open('permits/configs/full.py', 'w') as f:
+        pickle.dump(new_dict, f)
     # Now let's thin it into user_roles:
     narrow_dicts = {k: _spread_into_roles(v) for k, v in new_dict.items()}
-
-    pickle.dump(narrow_dicts, open('permits/configs/narrow.py', 'w'))
-    return (new_dict, narrow_dicts)
+    with open('permits/configs/narrow.py', 'w') as n:
+        pickle.dump(narrow_dicts, n)
+    # Lastly, let's compile our dictionary
+    with open('permits/configs/traversals.py', 'w') as t:
+        pickle.dump(methods.traversal_bits(BASE_PERMISSIONS), t)
 
 
 def get_full_configs():

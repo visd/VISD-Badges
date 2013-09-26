@@ -1,6 +1,6 @@
 ## Badges API
 For users in the `group` role.
-Also with extra permissions for the `visd-staff` group.
+Also with extra permissions for the `admin` group.
 ### Challenges
 Challenges represent projects or ideas teachers can take on.
 
@@ -25,7 +25,7 @@ Required fields: group, title, slug, skillset_id, short_description, user_id, gr
 Returns: title, created_at, short_description, long_description
 
     /challenges/:id - DELETE
-  
+
 
     /tools/:id/challenges - GET
 
@@ -39,14 +39,14 @@ Returns: first_name, last_name, email
 
     /users/:id - PUT
 
-Required fields: first_name, last_name, email
+Required fields: first_name, last_name, group, email
+
+    /users/:id - DELETE
+
 
     /users/:id - GET
 
 Returns: first_name, last_name, email
-
-    /users/:id - DELETE
-
 ### Tags
 Tags let users mark entries, challenges or other objects with a keyword.
 
