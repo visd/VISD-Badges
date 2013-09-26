@@ -27,7 +27,7 @@ class Event(models.Model):
 
     # Note these are not the tags returned in the get_dict method.
     # These tags leave open the option that we can tag events just as we can challenges, entries, etc.
-    tags = models.ManyToManyField(Tag)
+    tags = models.ManyToManyField(Tag, related_name='events')
 
 
     def save(self, *args, **kwargs):

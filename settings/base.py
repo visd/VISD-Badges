@@ -71,7 +71,7 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 
@@ -87,7 +87,7 @@ SECRET_KEY = 'xgpa9yl#=ptag1ci-9y$=!@@)qvphvt!$w@kqhd7%#*%i1i=w!'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
+    # 'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -96,15 +96,22 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'custom.mids.HttpMethodsMiddleware'
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
 
 TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
-    'events.context_processors.return_latest_events',
+    # 'social.apps.django_app.context_processors.backends',
+    # 'social.apps.django_app.context_processors.login_redirect'
+    #'events.context_processors.return_latest_events',
 )
 
+AUTHENTICATION_BACKENDS = (
+    'social.backends.google.GoogleOpenId',
+    'django.contrib.auth.backends.ModelBackend'
+    )
 
 ROOT_URLCONF = 'urls'
 
@@ -119,7 +126,7 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
-    'django.contrib.auth',
+    # 'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
@@ -131,11 +138,15 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'rest_framework',
     'django_extensions',
+    # 'social.apps.django_app.default',
     'api',
     'badges',
     'auth_fix',
     'events',
-    'custom'
+    'custom',
+    'custom_auth',
+    'permits',
+    'newviews'
 )
 
 # A sample logging configuration. The only tangible logging
@@ -167,8 +178,13 @@ LOGGING = {
     }
 }
 
+# These are settings for the permits system
+INDEX_OWNER = 'ajames@vashonsd.org'
+INDEX_GROUP = 'visd-user'
 
-REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),
-    'PAGINATE_BY': 10
-}
+AUTH_USER_MODEL = 'custom_auth.CustomUser'
+
+# REST_FRAMEWORK = {
+#     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),
+#     'PAGINATE_BY': 10
+# }

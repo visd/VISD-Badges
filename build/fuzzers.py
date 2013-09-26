@@ -5,6 +5,9 @@ import names
 
 from factory import fuzzy
 
+# from django.contrib.auth.models import User, Group
+from custom_auth.models import CustomUser, NestedGroup
+
 
 class FishFuzz(fuzzy.BaseFuzzyAttribute):
 
@@ -25,10 +28,12 @@ class FishFuzz(fuzzy.BaseFuzzyAttribute):
             phrase_list.append(word_list[word_index])
         return ' '.join(phrase_list)
 
+
 class HexFuzz(fuzzy.BaseFuzzyAttribute):
 
     def fuzz(self):
         return hex(random.randint(1000,100000))
+
 
 class SlugFuzz(fuzzy.BaseFuzzyAttribute):
     """ Returns a random slug of random length from 3 to 10
@@ -37,6 +42,7 @@ class SlugFuzz(fuzzy.BaseFuzzyAttribute):
     def fuzz(self):
         return ''.join(random.choice(string.lowercase) for i in range(random.randint(3,10)))
 
+
 class FirstNameFuzz(fuzzy.BaseFuzzyAttribute):
     """ Returns a first name, from the names module.
     """
@@ -44,9 +50,32 @@ class FirstNameFuzz(fuzzy.BaseFuzzyAttribute):
     def fuzz(self):
         return names.get_first_name()
 
+
 class LastNameFuzz(fuzzy.BaseFuzzyAttribute):
     """ Returns a last name, from the names module.
     """
 
     def fuzz(self):
         return names.get_last_name()
+
+
+class RandomExistingUser(fuzzy.BaseFuzzyAttribute):
+
+    def fuzz(self):
+        return CustomUser.objects.order_by('?')[0]
+
+
+class RandomExistingGroup(fuzzy.BaseFuzzyAttribute):
+
+    def fuzz(self):
+        return NestedGroup.objects.order_by('?')[0]
+
+
+class RandomGroupAndChildren(fuzzy.BaseFuzzyAttribute):
+
+    def fuzz(self):
+        from permits.methods import get_child_groups
+        group = NestedGroup.objects.order_by('?')[0]
+        allgroups = get_child_groups(group.name)
+        allgroups.append(group.name)
+        return allgroups

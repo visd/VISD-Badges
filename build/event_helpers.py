@@ -12,7 +12,7 @@ from importlib import import_module
 from django.contrib.auth.models import User
 
 from events.event_types import EVENT_TYPES
-from build.resource_configs import RESOURCE_CONFIGS
+from badges.resource_configs import RESOURCE_CONFIGS
 
 from events.processors import register_event
 

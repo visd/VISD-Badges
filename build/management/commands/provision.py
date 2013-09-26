@@ -44,5 +44,5 @@ class Command(LabelCommand):
                                                )
         except CommandError:
             print "You have supplied an invalid option."
-        except IndexError:
-            print "You must supply the name of a manifest list.\nUse ./manage.py manifest_list to show what we have."
+        except IndexError as e:
+            print "IndexError: %s" % e.strerror

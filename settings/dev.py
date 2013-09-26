@@ -2,6 +2,11 @@ from .base import *
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+TEST_RUNNER = 'discover_runner.DiscoverRunner'
+TEST_DISCOVER_TOP_LEVEL = PROJECT_ROOT
+TEST_DISCOVER_ROOT = PROJECT_ROOT
+TEST_DISCOVER_PATTERN = "test_*"
+
 
 DATABASES = {
     'default': {
@@ -15,4 +20,17 @@ DATABASES = {
     }
 }
 
-INSTALLED_APPS += ('build',)
+INSTALLED_APPS += ('build',
+    'discover_runner',
+    'debug_toolbar')
+
+MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
+
+INTERNAL_IPS = ('0.0.0.0','10.0.2.2')
+
+def custom_show_toolbar(self):
+    return True
+
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': custom_show_toolbar,
+}

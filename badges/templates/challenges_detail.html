@@ -1,30 +1,32 @@
 {% extends "content.html" %}
 
 {% block mainpage %}
-{# breadcrumbs #}
-<ul class="breadcrumb">
-    <li><a href="/skillsets">Skillsets</a><span class="divider">></span></li>
-    <li><a href="{{skillset.url.href}}">{{skillset.title}}</a><span class="divider">></span></li>
-    <li class="active">{{title}}</li>
-</ul>
-
-{# Main section #}
 <div id="mainpanel" class="container-fluid {{skillset.slug}}">
   
   <section class="">
+    {% if relations.tags %}
+      {% with tags=relations.tags %}
+      {% include 'fragments/tagbar.html' %}
+      {% endwith %}
+    {% endif %}
+
+    {% include 'fragments/editbar.html' %}  
     <div class="row-fluid">
       <div class="span2">
         <div>
           <img alt="" src="http://i.imgur.com/WrkwjSF.png">
-          <h4 class="text-center">{{ skillset.title }}</h4>
+          <a href="{{ meta.parent.url }}"><h4 class="text-center">{{ meta.parent.title }}</h4></a>
         </div>
       </div>
       {# sidebar #}
       <div class="span10">
-        <h1>{{title}}</h1>
-          <p class="lead">{{long_description}}</p>
+        <h1>{{ fields.title }}</h1>
+          <p class="lead">{{ fields.long_description }}</p>
           <div class="text-right">
-            <a href="www.example.com" class="btn btn-info">Send help</a>&nbsp;<a href="www.example.com" class="btn btn-primary">I did this!</a>
+            <a href="www.example.com" class="btn btn-info">Send help</a>&nbsp;
+            {% if 'POST' in relations.entries.meta.methods %}
+            <a href="{{ entries.meta.url }}?form=create" class="btn btn-primary">I did this!</a>
+            {% endif %}
           </div> 
       </div>
     </div>
@@ -34,40 +36,35 @@
   <div class="row-fluid">
     <div class="span3 sidebar">
       <h4>Learn more</h4>
-      {% for resource in resources %}
-       <p>
-         <a href="{{resource.url}}" title="{{resource.description}}">{{resource.title}}</a>
-       </p>
-      {% endfor %}
+    
+      {% if relations.resources %}
+        {% for resource in relations.resources.objects %}
+         <p>
+           <a href="{{resource.fields.url_link}}" title="{{resource.fields.description}}">{{resource.fields.title}}</a>
+         </p>
+        {% endfor %}
+      {% endif %}
+
+      {% if relations.tools %}
       <h4>Tools</h4>
-      {% for tool in tools %}
        <p>
-         <a href="{{tool.link}}">{{tool.title}}</a></br>
+        {% for tool in relations.tools.objects %}
+          {% if 'GET' in tool.meta.methods %}
+            <a href="{{tool.meta.url}}">{{tool.fields.title}}</a></br>
+          {% else %}
+            {{ tool.title }}
+          {% endif %}
+        {% endfor %}
        </p>
-      {% endfor %}
+       {% endif %}
     </div>
 
     <div class="span9">       
-      <h3>Examples</h3>
+      <h3>Entries</h3>
        <ul class="thumbnails">
-      {% for example in examples %}
+      {% for entry in relations.entries.objects %}
           <li class="span6">
-          <div class="thumbnail
-          {% if example.user %}
-           entry
-          {% endif %}
-          ">
-            {% if example.user %}
-            <p>Submitted by <a href="{{example.user.url}}">{{example.user.fullname}}</a></p>
-            {% endif %}
-            <img data-src="holder.js/300x200">
-            <h4>{{example.title}}</h4>
-            <p>{{example.caption}}
-            {% if example.link %}
-            <a href="{{example.link}}">[ learn more ]</a>
-            {% endif %}
-            </p>
-          </div>
+            {% include 'fragments/entry_listing.html' %}
           </li>
       {% endfor %}
       </ul>

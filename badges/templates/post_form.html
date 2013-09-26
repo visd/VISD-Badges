@@ -1,0 +1,8 @@
+{% extends "content.html" %}
+
+{% block mainpage %}
+<form action="{{ target.url }}" method="{{ target.method }}">{% csrf_token %}
+{{ target.form.as_p }}
+<input type="submit" value="Submit" />
+</form>
+{% endblock %}

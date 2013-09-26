@@ -1,9 +1,15 @@
 manifests:    
     - title: small
       description: A small population of instances per model.
-      premake:    
+      premake:
+      - factory: GroupFactory
+        count: 6
+      - factory: UserFactory
+        count: 6
+      - factory: SuperUserFactory
+        count: 1
       - factory: SkillsetFactory
-        count: 3
+        count: 7
         children:
           - factory: ChallengeFactory
             count: 4
@@ -15,21 +21,18 @@ manifests:
               - factory: EntryFactory
                 count: 5
                 parent_field: challenge
-      - factory: UserFactory
-        count: 6
       postadd:
       - factory: ManyToManyFactory
         create: TagFactory
-        join_to: [Challenge]
+        join_to: [Challenge, Skillset, Entry]
         target_field: tags
         count: 3
       - factory: ManyToManyFactory
         create: ToolFactory
-        join_to: [Challenge]
+        join_to: [Challenge, Entry]
         target_field: tools
         count: 3
-      - factory: AllTypesOfEvents
-        count: 3
+      - factory: assign_parents_and_superuser_to_groups
 
     - title: medium
       description: Closer to the a realistic size of the database at about 1 year in.

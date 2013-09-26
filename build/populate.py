@@ -10,6 +10,8 @@ from badges.models import Skillset, Challenge, Entry, Resource, Tool, Tag
 from events.models import Event
 from django.contrib.auth.models import User
 
+from importlib import import_module
+
 """
 This module assumes you have created factories for models in your Django project, and that you have created
 a YAML manifest showing the relations you want the factories to generate.
@@ -62,14 +64,20 @@ def make_factory(factory_class, parent_field=None, parent=None):
         return factory.build(c)
 
 
-def clear_data(mod_list=[Tool, Challenge, Skillset, Entry, Tag, Resource, Event, User]):
+def clear_data(subset=None):
     """ Used to delete all instances of models.
     """
-
-    # Pass a different list to delete a subset.
+    from badges.resource_configs import RESOURCE_CONFIGS
+    if subset:
+        resources = [k for k in RESOURCE_CONFIGS.keys() if k in subset]
+    else:
+        resources = [k for k in RESOURCE_CONFIGS.keys()]
     
-    for mod in mod_list:
+    for r in resources:
+        resource_model = '.'.join([RESOURCE_CONFIGS[r]['app'], 'models'])
+        mod = getattr(import_module(resource_model), RESOURCE_CONFIGS[r]['model'])
         mod.objects.all().delete()
+    return
 
 
 def load_manifest():
