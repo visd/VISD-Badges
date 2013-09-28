@@ -176,7 +176,7 @@ def instance_permissions(user, instance=None):
     else:
         top_group = user.status_over(instance.group)
         user_role = role_for(user, instance)
-    return narrow_config(top_group.name)[user_role]
+    return narrow_config(top_group and top_group.name)[user_role]
 
 
 def sorted_fields_of(filtered_config, traversal_fields=None):
@@ -188,7 +188,7 @@ def sorted_fields_of(filtered_config, traversal_fields=None):
     """
     result = {'fields': {'read': [], 'write': []}, 'traversals': []}
     traversal_fields = traversal_fields or TRAVERSAL_PERMISSIONS
-    
+
     for k, v in filtered_config.items():
         # odd-numbered permissions are executable.
         t_code = traversal_fields.get(k, None)
