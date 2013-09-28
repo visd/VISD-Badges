@@ -179,7 +179,7 @@ def instance_permissions(user, instance=None):
     return narrow_config(top_group.name)[user_role]
 
 
-def sorted_fields_of(filtered_config, traversal_fields):
+def sorted_fields_of(filtered_config, traversal_fields=None):
     """ Given a set of fields, each one with a permission digit, divide them into
         traversals and attributes.
 
@@ -187,7 +187,8 @@ def sorted_fields_of(filtered_config, traversal_fields):
         Traversals get sorted into 'POST' and/or 'GET'.
     """
     result = {'fields': {'read': [], 'write': []}, 'traversals': []}
-
+    traversal_fields = traversal_fields or TRAVERSAL_PERMISSIONS
+    
     for k, v in filtered_config.items():
         # odd-numbered permissions are executable.
         t_code = traversal_fields.get(k, None)

@@ -25,7 +25,7 @@
           <div class="text-right">
             <a href="www.example.com" class="btn btn-info">Send help</a>&nbsp;
             {% if 'POST' in relations.entries.meta.methods %}
-            <a href="{{ entries.meta.url }}?form=create" class="btn btn-primary">I did this!</a>
+            <a href="{{ relations.entries.meta.url }}?form=create" class="btn btn-primary">I did this!</a>
             {% endif %}
           </div> 
       </div>

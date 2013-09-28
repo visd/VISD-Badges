@@ -5,11 +5,13 @@ import logging
 
 from django.forms.models import modelform_factory
 from django.core.urlresolvers import reverse
+from django.conf import settings
 
 from permits import methods as permit
-from permits.configs.modifiers import full_config, narrow_config
+from permits.configs.modifiers import narrow_config
 
-from badges.resource_configs import reverbose
+from badges.resource_configs import reverbose, deverbose
+from badges.models import NestedGroup
 
 import helpers as help
 from utils import and_list
@@ -32,11 +34,12 @@ def get_delete_form(instance, warning=None):
     """ Right away, a button for delete/cancel.
     Then, on clicking the form, perhaps a warning.
     """
-    return {'target': {
-        'url': instance.url,
-        'method': 'DELETE',
-        'form': form
-    }}
+    # return {'target': {
+    #     'url': instance.url,
+    #     'method': 'DELETE',
+    #     'form': form
+    # }}
+    pass
 
 
 def delete_instance(instance=None, confirm=False):
@@ -175,38 +178,43 @@ def post_to_collection(parent=None, parent_id=None, resource=None,
     # We use this, and the config, to find out which fields on the model this user is
     # permitted to create.
     # Whatever was submitted in the request.POST gets filtered through this.
-    write_fields = help.help.sorted_fields_of(
-        config['fields'])['fields']['write']
+    write_fields = help.sorted_fields_of(
+        config[resource]['fields'])['fields']['write']
     permitted_fields = list(set(request.POST) &
                             set(write_fields) &
                             set(db_columns))
-    # And now, the permitted and user-supplied dictionary:
+    # And now, we take, from the user-supplied dictionary, only the ones
+    # we know we're permitted to post:
     values = {k: request.POST[k] for k in permitted_fields}
     # Now we're going to extend the set of fields, because most models will need
     # a user, a group and a parent.
     extensions = []
 
-    # Someday put this next, ugly chunk of code into a loop, and perhaps figure
-    # the values outside this method, in a config somewhere.
-
+    # Every resource needs a user.
     if 'user_id' in db_columns:
-        values['user_id'] = user.pk
-        extensions.append('user_id')
+        values['user'] = user.pk
+        extensions.append('user')
+
+    # We need to figure out what group to put this new object in.
     if 'group_id' in db_columns:
-        values['group_id'] = user.status_over(
+        # Either we know which context to create this in, because
+        # we have a parent instance, or we have to use the default group
+        # from settings.
+        g = user.status_over(
             parent and getattr(parent_instance, 'group')
             or
             NestedGroup.objects.get(name=settings.INDEX_GROUP))
-        extensions.append('group_id')
+        values['group'] = g.pk
+        extensions.append('group')
 
     # If this new resource needs a parent, let's use the one in the URL.
     # This is assuming we've screened for validity -- we won't get here
     # without all our sanity checks in place.
     p = help.parent_of(resource)
-    if p:
+    if parent:
         pid = "%s_id" % p
         values[pid] = parent_id
-        extensions.append(pid)
+        extensions.append(deverbose(parent))
 
     permitted_fields.extend(extensions)
 
@@ -215,13 +223,10 @@ def post_to_collection(parent=None, parent_id=None, resource=None,
             'parent_id': parent_id,
             'resource': resource,
             'user': user,
-            'user': user_role,
             'config': config,
             'depth': 0}
     if form.is_valid():
         new_inst = form.save(commit=False)
-        # Now we need to sneak in a few more values.
-
         # Success! Now show the page this belongs on.
         return (True, get_collection(**opts))
     else:
@@ -250,11 +255,11 @@ def get_post_form(parent=None, parent_id=None,
         a form for posting one of this resource, and
         a target url/method for the form.
 
-        We're already checked, and the user is allowed to post one of these.
+        We have already checked, and the user is allowed to post one of these.
     """
     if form is None:
         # The user is going to be the owner of this resource.
-        this_config = permit.reduce_permissions_dictionary_to('owner', config)
+        this_config = narrow_config()['owner']
 
         formfields = help.sorted_fields_of(
             this_config[resource]['fields'])['fields']

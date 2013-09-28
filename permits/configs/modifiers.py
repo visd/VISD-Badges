@@ -8,7 +8,7 @@ def full_config(group=None):
         return FULL_PERMISSIONS['BASE']
 
 
-def narrow_config(group):
+def narrow_config(group=None):
     if group and group in NARROW_PERMISSIONS:
         return NARROW_PERMISSIONS[group]
     else:
