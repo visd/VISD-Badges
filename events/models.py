@@ -3,8 +3,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.template import Template, Context
 from django.forms.models import model_to_dict
+from django.conf import settings
+
+from badges.models import NestedGroup
 
 from badges.models import Tag
+
 
 class Event(models.Model):
     """ A record of something happening in the system.
@@ -13,11 +17,13 @@ class Event(models.Model):
 
     The type_info method looks up the information needed to render the event into human-readable form.
     """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='tags')
+    group = models.ForeignKey(NestedGroup, related_name='tags')
+
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
     type = models.CharField(max_length=32)
-    user = models.SlugField()
-
+    
     # The following fields locate the model instance serving as the predicate of this Event.
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()

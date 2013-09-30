@@ -1,4 +1,5 @@
 import cPickle as pickle
+from badges.models import NestedGroup
 
 
 def load(p):
