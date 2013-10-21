@@ -45,7 +45,7 @@ class Tag(URLmixin, models.Model):
 class Tool(URLmixin, models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='tools')
     group = models.ForeignKey(NestedGroup, related_name='tools')
-    title = models.CharField(db_index=True, max_length=30, unique=True)
+    title = models.CharField(db_index=True, max_length=256, unique=True)
     slug = models.SlugField()
     url_link = models.URLField(max_length=300)
     url_title = models.CharField(max_length=140)
@@ -75,7 +75,7 @@ class Tool(URLmixin, models.Model):
 class Entry(URLmixin, models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='entries')
     group = models.ForeignKey(NestedGroup, related_name='entries')
-    title = models.CharField(max_length=30)
+    title = models.CharField(max_length=256)
     caption = models.CharField(max_length=140)
     image = models.ImageField(upload_to='photos/%Y/%m/%d/')
     url_link = models.URLField(max_length=300)
@@ -105,7 +105,7 @@ class Challenge(URLmixin, models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='challenges')
     group = models.ForeignKey(NestedGroup, related_name='challenges')
 
-    title = models.CharField(db_index=True, max_length=30, unique=True)
+    title = models.CharField(db_index=True, max_length=256, unique=True)
     slug = models.SlugField()
     skillset = models.ForeignKey('Skillset', related_name='challenges')
     short_description = models.CharField(max_length=140)
@@ -137,7 +137,7 @@ class Resource(URLmixin, models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='resources')
     group = models.ForeignKey(NestedGroup, related_name='resources')
 
-    title = models.CharField(max_length=30)
+    title = models.CharField(max_length=256)
     url_link = models.URLField(max_length=300)
     url_title = models.CharField(max_length=140)
     description = models.CharField(max_length=140)
@@ -167,7 +167,7 @@ class Resource(URLmixin, models.Model):
 class Skillset(URLmixin, models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='skillsets')
     group = models.ForeignKey(NestedGroup, related_name='skillsets')
-    title = models.CharField(db_index=True, max_length=30, unique=True)
+    title = models.CharField(db_index=True, max_length=256, unique=True)
     slug = models.SlugField()
     short_description = models.CharField(max_length=140)
     long_description = models.CharField(max_length=600)

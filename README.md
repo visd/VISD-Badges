@@ -2,7 +2,7 @@
 
 This project may have two areas of interest to it.
 
-On the developer's side, there's another stab at rapid and secure developement, in this case within the Django framework.
+On the developer's side, there's another stab at rapid and secure developement of web apps, in this case within the Django framework.
 
 On the content side, the end result is a system for teachers to use to track their own uses of technology in their teaching. It's a planner, in idea book, and a site for sharing their own progress.
 
