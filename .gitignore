@@ -2,4 +2,3 @@
 *.pyc
 *.sql
 .deploy
-**/migrations/
