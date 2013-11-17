@@ -1,0 +1,20 @@
+NameVirtualHost *:8056
+
+<VirtualHost *:8056>
+
+DocumentRoot /srv/www/test
+
+WSGIDaemonProcess knowhows processes=2 threads=15 display-name=%{GROUP}
+WSGIProcessGroup knowhows
+
+WSGIScriptAlias / /srv/www/test/hello.wsgi
+
+Alias /static/ /srv/www/test/static/
+
+<Directory /srv/www/test/>
+  Options FollowSymLinks
+  AllowOverride None
+</Directory>
+
+</VirtualHost>
+

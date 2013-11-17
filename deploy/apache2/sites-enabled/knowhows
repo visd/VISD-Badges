@@ -1,0 +1,32 @@
+
+NameVirtualHost *:80
+DocumentRoot /srv/www/knowhows/badges/static
+
+WSGIProcessGroup knowhows
+WSGIDaemonProcess knowhows processes=2 threads=15 display-name=%{GROUP} python-path=/srv/www/knowhows
+
+WSGIScriptAlias / /srv/www/knowhows/deploy/wsgi.py
+
+<VirtualHost *:80>
+    ServerAdmin ajames@vashonsd.org
+    ServerName badges.vashonsd.org
+
+    Alias /media/ /srv/www/knowhows/badges/media/
+    Alias /static/ /srv/www/knowhows/badges/static/
+
+  <Directory /srv/www/knowhows/badges/media>
+    Options FollowSymLinks
+    AllowOverride None
+  </Directory>
+
+  <Directory /srv/www/knowhows/badges/static>
+    Options FollowSymLinks
+    AllowOverride None
+  </Directory>
+
+  <Directory /srv/www/knowhows/deploy>
+    Options FollowSymLinks
+    AllowOverride None
+  </Directory>
+
+</VirtualHost>
