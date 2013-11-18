@@ -25,7 +25,7 @@ def handler(request, parent=None, parent_id=None,
     to our methods freely.
     """
     # Until the day we hook Google's auth into our middleware:
-    request.user = CustomUser.objects.all()[1]
+    request.user = CustomUser.objects.all()[0]
     logging.info('User: %s, groups: %s' % (str(request.user), str(request.user.memberships.all())))
     # Are these even in our defined list of resources?
     if resource not in RESOURCES or (parent and parent not in RESOURCES):
